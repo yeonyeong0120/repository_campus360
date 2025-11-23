@@ -8,13 +8,12 @@ import 'firebase_options.dart'; // flutterfire configure가 생성한 파일
 void main() async {
   // Firebase가 네이티브 코드를 먼저 초기화
   WidgetsFlutterBinding.ensureInitialized();
-  // Firebase 앱을 초기화하는 코드
+  // Firebase 앱 초기화
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-
-  // 모든 준비가 끝나면 앱을 실행
+  
   runApp(
     ChangeNotifierProvider(
-      create: (context) => UserProvider(), // "전광판" 설치
+      create: (context) => UserProvider(), // 전광판 설치
       child: const Campus360App(),
     ),
   );
