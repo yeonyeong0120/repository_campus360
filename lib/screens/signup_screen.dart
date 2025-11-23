@@ -20,7 +20,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
   void _handleSignup() async {
     try {
-      // 1. Firebase Authentication에 계정 생성 [cite: 21]
+      // 1. Firebase Authentication에 계정 생성
       UserCredential userCredential = await FirebaseAuth.instance
           .createUserWithEmailAndPassword(
             email: _emailController.text,
@@ -35,11 +35,11 @@ class _SignupScreenState extends State<SignupScreen> {
         email: _emailController.text,
         name: _nameController.text,
         studentId: _studentIdController.text,
-        department: "디지털융합제어과", // (임시, 드롭다운 값으로 변경 필요) [cite: 126]
-        role: "student", // 고정 [cite: 22-23, 158]
+        department: "디지털융합제어과", // (임시, 드롭다운 값으로 변경 필요)
+        role: "student", // 고정
       );
 
-      // 3. Firestore 'users' 컬렉션에 정보 저장 [cite: 22-23]
+      // 3. Firestore 'users' 컬렉션에 정보 저장
       await FirebaseFirestore.instance
           .collection("users")
           .doc(uid)
