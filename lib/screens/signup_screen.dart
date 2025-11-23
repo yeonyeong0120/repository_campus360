@@ -16,7 +16,15 @@ class _SignupScreenState extends State<SignupScreen> {
   final _passwordController = TextEditingController();
   final _nameController = TextEditingController();
   final _studentIdController = TextEditingController();
-  // ... (학과 선택을 위한 String 변수 등) ...
+
+  // 학과 선택 관련...
+  final List<String> _departments = [
+    '디지털융합제어과',
+    '메카트로닉스과',
+    'AI소프트웨어과',
+    '영상디자인과',
+  ];
+  String? _selectedDept; // 선택한거 저장할곳
 
   void _handleSignup() async {
     try {
@@ -35,7 +43,7 @@ class _SignupScreenState extends State<SignupScreen> {
         email: _emailController.text,
         name: _nameController.text,
         studentId: _studentIdController.text,
-        department: "디지털융합제어과", // (임시, 드롭다운 값으로 변경 필요)
+        department: _selectedDept ?? "학과미정", // 선택 안 했으면 기본값
         role: "student", // 고정
       );
 
@@ -45,11 +53,23 @@ class _SignupScreenState extends State<SignupScreen> {
           .doc(uid)
           .set(newUser.toMap());
 
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text("가입 성공! 로그인해주세요!")));
+        Navigator.pop(context); // 화면 닫기
+      }
+
       // (회원가입 성공 시 로그인 화면으로 이동 등...)
     } on FirebaseAuthException catch (e) {
-      // (에러 처리...)
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(
+          content: Text("가입 실패: ${e.message}")));
+      }
     }
-  }
+  } // _handleSignup 클래스
 
   @override
   Widget build(BuildContext context) {
@@ -76,7 +96,20 @@ class _SignupScreenState extends State<SignupScreen> {
               controller: _studentIdController,
               decoration: InputDecoration(labelText: "학번"),
             ),
-            // (학과 선택 드롭다운 UI 추가...)
+            const SizedBox(height: 10), // 살짝 띄우기
+            DropdownButtonFormField<String>(
+              decoration: const InputDecoration(labelText: "학과 선택"),
+              initialValue: _selectedDept,
+              items: _departments.map((String dept) {
+                return DropdownMenuItem<String>(value: dept, child: Text(dept));
+              }).toList(),
+              onChanged: (newValue) {
+                setState(() {
+                  _selectedDept = newValue;
+                });
+              },
+            ),
+            const SizedBox(height: 20), // 버튼이랑 같이
             ElevatedButton(onPressed: _handleSignup, child: Text("가입하기")),
           ],
         ),

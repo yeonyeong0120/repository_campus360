@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart'; // import 추가
+import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
+import 'package:repository_campus360/screens/login_screen.dart';
 import 'providers/user_provider.dart';
 import 'firebase_options.dart'; // flutterfire configure가 생성한 파일
 
@@ -24,6 +25,13 @@ class Campus360App extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp();
+    return MaterialApp(
+      title: 'Campus Room 360',
+      theme: ThemeData(
+        colorScheme:  ColorScheme.fromSeed(seedColor: Colors.blue),
+        useMaterial3: true,
+      ),
+      home: const LoginScreen(),
+    );
   }
 }
