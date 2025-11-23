@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
+import 'package:repository_campus360/screens/home_screen.dart';
 import '../models/user_model.dart';
 import '../providers/user_provider.dart';
 import 'signup_screen.dart'; // 회원가입 화면 연결
@@ -42,6 +43,12 @@ class _LoginScreenState extends State<LoginScreen> {
         // 5. 전광판(Provider)에 내 정보 등록!
         if (mounted) {
           context.read<UserProvider>().setUser(userModel);
+          if (mounted) {
+             Navigator.pushReplacement(
+               context,
+               MaterialPageRoute(builder: (_) => const HomeScreen()),
+             );
+          }
 
           // 6. 성공 메시지 띄우기
           ScaffoldMessenger.of(context).showSnackBar(
