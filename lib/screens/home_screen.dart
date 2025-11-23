@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
 import 'login_screen.dart'; // 로그아웃 시 이동할 화면
+import 'map_screen.dart'; // 지도 화면 연결
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -33,31 +34,68 @@ class HomeScreen extends StatelessWidget {
       ),
       
       // 2. 본문 (Body)
-      body: Center(
+      body: Padding(
+        padding: const EdgeInsets.all(20.0), // 전체 여백 추가
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start, // 왼쪽 정렬
           children: [
+            // 1. 상단 환영 메시지
             Text(
-              "안녕하세요, ${user?.name ?? '학우'}님!", 
+              "안녕하세요, ${user?.name ?? '학우'}님! 🌱", 
               style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 10),
-            Text(
-              "소속: ${user?.department ?? '학과미정'}",
-              style: const TextStyle(fontSize: 16, color: Colors.grey),
+            Align(
+              alignment: AlignmentGeometry.centerRight,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 10.0),
+                child: Text(
+                  user?.department != null ? "${user!.department} 전공" : "소속 미정", 
+                  style: const TextStyle(fontSize: 16, color: Colors.blueGrey)
+                ),
+              ),
             ),
-            const SizedBox(height: 30),
-            
-            // 여기에 공간 목록이 들어갈 예정 (Phase 2)
-            const Text("예약 가능한 공간 목록이 여기에 표시됩니다."),
+
+            const SizedBox(height: 30), // 간격 띄우기
+
+            // 최근 예약한 강의실 // 아직은 모양만!!
+            const Text("최근 예약한 강의실", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+            const Card(
+              margin: EdgeInsets.only(top: 10),
+              child: ListTile(
+                leading: Icon(Icons.history, color: Colors.orange),
+                title: Text("최근 예약 기록이 없습니다."),
+              ),
+            ),
+
+            const SizedBox(height: 80), // 약간 아래로 밀기 // 나중에 수정할지도..
+
+            // 2. 공간 찾아보기 버튼 (지도로 이동)
+            const Text("원하는 공간을 찾아보세요!", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity, // 버튼 꽉 채우기
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  // 지도 화면으로 이동
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const MapScreen()));
+                },
+                icon: const Icon(Icons.map),
+                label: const Text("지도에서 공간 찾기"),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 15), 
+                  textStyle: const TextStyle(fontSize: 18)
+                ),
+              ),
+            ),
+            const SizedBox(height: 20), // 바닥에서 살짝 띄우기
           ],
         ),
       ),
       
-      // 3. 플로팅 버튼 (챗봇 등)
+      // 3. 플로팅 버튼 챗봇? (나중에 구현 예정)
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // 챗봇 열기 기능... 아마도 나중에 구현?
+          // 챗봇 열기...
         },
         child: const Icon(Icons.chat),
       ),
