@@ -4,10 +4,13 @@ import 'package:provider/provider.dart';
 import 'package:repository_campus360/screens/login_screen.dart';
 import 'providers/user_provider.dart';
 import 'firebase_options.dart'; // flutterfire configure가 생성한 파일
+import 'package:intl/date_symbol_data_local.dart'; 
+import 'package:flutter_localizations/flutter_localizations.dart'; // [추가]
 
 void main() async {
   // Firebase가 네이티브 코드를 먼저 초기화
   WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting('ko_KR', null); // 한국어 문제 해결
   // Firebase 앱 초기화
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   
@@ -30,6 +33,22 @@ class Campus360App extends StatelessWidget {
         colorScheme:  ColorScheme.fromSeed(seedColor: Colors.blue),
         useMaterial3: true,
       ),
+      // 여기부터 한국어 문제 해결
+      localizationsDelegates: const [ 
+        GlobalMaterialLocalizations.delegate, // Material 위젯의 텍스트 지원 (예: 확인, 취소)
+        GlobalWidgetsLocalizations.delegate, // 위젯의 텍스트 방향 지원
+        GlobalCupertinoLocalizations.delegate, // iOS 스타일 위젯의 텍스트 지원
+      ],
+      
+      // 지원 언어 목록 설정
+      supportedLocales: const [
+        Locale('en', 'US'), // 기본 영어
+        Locale('ko', 'KR'), // 한국어 지원 명시
+      ],
+      
+      // 기본 Locale을 한국어로 설정
+      locale: const Locale('ko', 'KR'),
+
       home: const LoginScreen(),
     );
   }
