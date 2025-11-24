@@ -20,7 +20,7 @@ class _MapScreenState extends State<MapScreen> {
         actions: [
           // 필터 아이콘
           IconButton(
-            icon: const Icon(Icons.filter_list_alt), 
+            icon: const Icon(Icons.filter_list_alt), // filter_list_alt
             onPressed: () => _showFilterModal(context), // 바텀 시트 열기
           ),
         ],

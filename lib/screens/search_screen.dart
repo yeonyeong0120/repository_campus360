@@ -1,6 +1,7 @@
 // lib/screens/search_screen.dart
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'detail_screen.dart';
 
 class SearchScreen extends StatelessWidget {
   const SearchScreen({super.key});
@@ -40,9 +41,12 @@ class SearchScreen extends StatelessWidget {
                   subtitle: Text("${space['location']} | 수용 ${space['capacity']}명"),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text("${space['name']} 상세 페이지로 이동 예정"))
-                    );
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => DetailScreen(space: space),
+                      ),
+                    );  // ontap
                   },
                 ),
               );
