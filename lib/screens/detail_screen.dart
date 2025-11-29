@@ -93,7 +93,7 @@ class DetailScreen extends StatelessWidget {
 
                   const SizedBox(height: 40),
 
-                  // 5. 360도 뷰어 버튼 (기능 연결 완료)
+                  // 5. 360도 뷰어 버튼
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
@@ -124,28 +124,31 @@ class DetailScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                ],
-              ),
-            ),
-                  // 수리 요청 버튼
+
+                  // [이동됨] 수리 요청 버튼 (Padding 안으로 들어와서 정렬이 예뻐짐)
                   const SizedBox(height: 20),
                   const Divider(),
-                  TextButton.icon(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => RepairScreen(space: space),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.report_problem, color: Colors.redAccent),
-                    label: const Text(
-                      "이 공간에 고장/문제가 있나요?", 
-                      style: TextStyle(color: Colors.redAccent)
+                  Center( // 가운데 정렬을 위해 Center 위젯으로 감싸기
+                    child: TextButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => RepairScreen(space: space),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.report_problem, color: Colors.redAccent),
+                      label: const Text(
+                        "고장/문제가 있나요?", 
+                        style: TextStyle(color: Colors.redAccent, fontSize: 15)
+                      ),
                     ),
                   ),
                   const SizedBox(height: 50),
+                ], // Column children 끝
+              ),
+            ), // Padding 끝
           ],
         ),
       ),
