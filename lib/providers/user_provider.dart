@@ -1,19 +1,34 @@
-// lib/providers/user_provider.dart
 import 'package:flutter/material.dart';
-import '../models/user_model.dart'; // 방금 만든 UserModel 가져오기
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../models/user_model.dart';
 
 class UserProvider with ChangeNotifier {
-  UserModel? _currentUser; // 앱 내에 저장될 사용자 정보
+  UserModel? _currentUser;
 
   UserModel? get currentUser => _currentUser;
 
-  // 로그인 성공 시 이 함수를 호출
+  // 💡 찜 목록을 가져오는 Getter
+  List<String> get favoriteSpaces => _currentUser?.favoriteSpaces ?? const [];
+
   void setUser(UserModel user) {
     _currentUser = user;
-    notifyListeners(); // "전광판" 내용 변경! -> 알림
+    notifyListeners();
   }
 
-  // 로그아웃 시
+  // Firestore에서 UID를 사용하여 사용자 정보를 가져와 상태를 갱신하는 메서드
+  Future<void> fetchUserFromFirestore(String uid) async {
+    try {
+      final doc =
+          await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      if (doc.exists) {
+        final userModel = UserModel.fromMap(doc.data()!);
+        setUser(userModel);
+      }
+    } catch (e) {
+      // print('사용자 정보 로드 오류: $e');
+    }
+  }
+
   void clearUser() {
     _currentUser = null;
     notifyListeners();
