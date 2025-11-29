@@ -45,6 +45,7 @@ dependencies:
   intl: ^0.20.2
   # 💡 360도 뷰어 WebGL 연동을 위한 웹뷰 패키지 추가 (WebViewScreen에 사용)
   webview_flutter: ^4.2.0 
+  image_picker: ^1.2.1
 
 dev_dependencies:
   flutter_test:

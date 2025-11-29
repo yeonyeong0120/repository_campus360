@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'reservation_screen.dart';
 import 'webview_screen.dart'; // 💡 360도 뷰어 연동을 위한 화면 임포트
+import 'repair_screen.dart'; // 공간수리요청 페이지연결
 
 class DetailScreen extends StatelessWidget {
   // 강의실 정보는 검색 결과화면에서 전달받음
@@ -126,6 +127,25 @@ class DetailScreen extends StatelessWidget {
                 ],
               ),
             ),
+                  // 수리 요청 버튼
+                  const SizedBox(height: 20),
+                  const Divider(),
+                  TextButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => RepairScreen(space: space),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.report_problem, color: Colors.redAccent),
+                    label: const Text(
+                      "이 공간에 고장/문제가 있나요?", 
+                      style: TextStyle(color: Colors.redAccent)
+                    ),
+                  ),
+                  const SizedBox(height: 50),
           ],
         ),
       ),
