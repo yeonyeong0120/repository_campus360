@@ -42,24 +42,48 @@ class _ReservationScreenState extends State<ReservationScreen> {
 
     // 로그인한 유저 정보 가져오기
     final user = context.read<UserProvider>().currentUser;
-    if (user == null) return;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("로그인 정보가 유효하지 않습니다. 다시 로그인해주세요.")),
+      );
+      return;
+    }
 
     try {
-      // 선택한 시간 문자열 파싱 (예: "09:00 ~ 11:00")
-      // 시작 시간만 계산해서 저장 // 편의상 '날짜'와 '시간대' 텍스트를 저장
-      
+      // 💡 선택한 시간 문자열 파싱 및 Timestamp 계산
+      final timeParts = _selectedTime!.split(' ~ ');
+      final startTimeStr = timeParts[0]; // 예: "09:00"
+      final endTimeStr = timeParts[1]; // 예: "11:00"
+
+      // 시작 시간 (DateTime 객체) 생성
+      final startHour = int.parse(startTimeStr.split(':')[0]);
+      final startMinute = int.parse(startTimeStr.split(':')[1]);
+      final startTimeDateTime = DateTime(_selectedDay!.year,
+          _selectedDay!.month, _selectedDay!.day, startHour, startMinute);
+
+      // 종료 시간 (DateTime 객체) 생성
+      final endHour = int.parse(endTimeStr.split(':')[0]);
+      final endMinute = int.parse(endTimeStr.split(':')[1]);
+      final endTimeDateTime = DateTime(_selectedDay!.year, _selectedDay!.month,
+          _selectedDay!.day, endHour, endMinute);
+
       String dateString = DateFormat('yyyy-MM-dd').format(_selectedDay!);
 
       // DB 'reservations' 컬렉션에 저장
       await FirebaseFirestore.instance.collection('reservations').add({
         'userId': user.uid,
-        'userName': user.name, // 편의상 이름도 같이 저장
-        'spaceId': widget.space['name'], // 공간 이름 // 일단 ID대신 이름으로?
+        'userName': user.name,
+        'spaceId':
+            widget.space['name'], // Firestore 문서 ID를 저장하는 것이 좋지만, 일단 이름 유지
         'spaceName': widget.space['name'],
-        'date': dateString, // 2025-11-24
-        'timeSlot': _selectedTime, // 09:00 ~ 11:00
-        'status': 'confirmed', // 예약 확정 상태
-        'createdAt': FieldValue.serverTimestamp(), // 예약한 시간
+        'date': dateString,
+        'timeSlot': _selectedTime,
+        'status': 'confirmed',
+        // 💡💡💡 최종 수정: DateTime 객체를 명시적으로 Timestamp로 변환하여 저장
+        // 이 필드가 누락되거나 타입이 잘못되어 홈 화면 조회가 실패했습니다.
+        'startTime': Timestamp.fromDate(startTimeDateTime),
+        'endTime': Timestamp.fromDate(endTimeDateTime),
+        'createdAt': FieldValue.serverTimestamp(),
       });
 
       if (mounted) {
@@ -67,13 +91,20 @@ class _ReservationScreenState extends State<ReservationScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("예약이 완료되었습니다!")),
         );
-        // 메인 화면으로
+        // 메인 화면으로 돌아가 최근 예약 기록을 확인하도록 유도
         Navigator.of(context).popUntil((route) => route.isFirst);
       }
     } catch (e) {
       if (mounted) {
+        // FirebaseException 오류가 발생했을 때 정확히 알려줍니다.
+        String errorMessage = "알 수 없는 예약 실패 오류";
+        if (e is FirebaseException) {
+          errorMessage = "Firebase 오류: ${e.message}";
+        } else {
+          errorMessage = "예약 실패: $e";
+        }
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("예약 실패: $e")),
+          SnackBar(content: Text(errorMessage)),
         );
       }
     }
@@ -81,6 +112,7 @@ class _ReservationScreenState extends State<ReservationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // ... (build 메서드 내용 동일) ...
     return Scaffold(
       appBar: AppBar(title: Text("${widget.space['name']} 예약")),
       body: SingleChildScrollView(
@@ -89,7 +121,8 @@ class _ReservationScreenState extends State<ReservationScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // 1. 달력 (TableCalendar)
-            const Text("날짜 선택", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text("날짜 선택",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
             TableCalendar(
               locale: 'ko_KR', // 한국어 달력 (main.dart에서 설정 필요, 일단 기본값 사용)
@@ -120,7 +153,8 @@ class _ReservationScreenState extends State<ReservationScreen> {
             const SizedBox(height: 30),
 
             // 2. 시간 선택 (Chips)
-            const Text("시간 선택", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text("시간 선택",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
             Wrap(
               spacing: 10.0,
@@ -133,7 +167,8 @@ class _ReservationScreenState extends State<ReservationScreen> {
                   selectedColor: Colors.blue,
                   labelStyle: TextStyle(
                     color: isSelected ? Colors.white : Colors.black,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    fontWeight:
+                        isSelected ? FontWeight.bold : FontWeight.normal,
                   ),
                   onSelected: (selected) {
                     setState(() {
@@ -155,7 +190,8 @@ class _ReservationScreenState extends State<ReservationScreen> {
                   backgroundColor: Colors.blue,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 15),
-                  textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  textStyle: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 child: const Text("예약 확정하기"),
               ),

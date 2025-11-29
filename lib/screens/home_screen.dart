@@ -1,101 +1,397 @@
 // lib/screens/home_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../providers/user_provider.dart';
-import 'login_screen.dart'; // 로그아웃 시 이동할 화면
-import 'map_screen.dart'; // 지도 화면 연결
+import 'login_screen.dart';
+import 'map_screen.dart';
+import 'detail_screen.dart';
+import 'reservation_detail_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
+  // 👇 취소된 예약 제외하고 최근 예약 기록 가져오기 (수정됨!)
+  Widget _buildRecentReservation(String userId) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('reservations')
+          .where('userId', isEqualTo: userId)
+          .orderBy('startTime', descending: true)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Card(
+            margin: EdgeInsets.only(top: 10),
+            child: ListTile(
+              leading: Icon(Icons.history, color: Colors.orange),
+              title: Text("예약 기록을 불러오는 중..."),
+            ),
+          );
+        }
+
+        if (!snapshot.hasData || snapshot.hasError) {
+          return const Card(
+            margin: EdgeInsets.only(top: 10),
+            child: ListTile(
+              leading: Icon(Icons.history, color: Colors.orange),
+              title: Text("최근 예약 기록이 없습니다."),
+            ),
+          );
+        }
+
+        // 👇 취소되지 않은 예약만 필터링 (클라이언트에서)
+        final validReservations = snapshot.data!.docs.where((doc) {
+          final data = doc.data() as Map<String, dynamic>;
+          final status = data['status'] as String?;
+          return status != 'cancelled';
+        }).toList();
+
+        if (validReservations.isEmpty) {
+          return const Card(
+            margin: EdgeInsets.only(top: 10),
+            child: ListTile(
+              leading: Icon(Icons.history, color: Colors.orange),
+              title: Text("최근 예약 기록이 없습니다."),
+            ),
+          );
+        }
+
+        final reservation =
+            validReservations.first.data() as Map<String, dynamic>;
+
+        final Timestamp startTimeStamp = reservation['startTime'] as Timestamp;
+        final DateTime startTime = startTimeStamp.toDate();
+        final String formattedTime =
+            '${startTime.month}월 ${startTime.day}일 ${startTime.hour}시';
+
+        return Card(
+          margin: const EdgeInsets.only(top: 10),
+          color: Colors.lightGreen[50],
+          child: ListTile(
+            leading: const Icon(Icons.calendar_month, color: Colors.green),
+            title: Text(reservation['spaceName'] ?? '예약된 공간',
+                style: const TextStyle(fontWeight: FontWeight.bold)),
+            subtitle: Text("예약일시: $formattedTime"),
+            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => ReservationDetailScreen(
+                    reservation: reservation,
+                  ),
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _toggleFavorite(
+      BuildContext context, String spaceId, bool isFavorite) async {
+    final user = context.read<UserProvider>().currentUser;
+    if (user == null) return;
+
+    final userRef =
+        FirebaseFirestore.instance.collection('users').doc(user.uid);
+
+    final updateCommand = isFavorite
+        ? FieldValue.arrayRemove([spaceId])
+        : FieldValue.arrayUnion([spaceId]);
+
+    try {
+      await userRef.update({'favoriteSpaces': updateCommand});
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(isFavorite ? '찜 목록에서 제거되었습니다.' : '찜 목록에 추가되었습니다.'),
+            duration: const Duration(milliseconds: 800),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('찜 기능 처리 오류: $e')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    // 전광판(Provider)에서 로그인한 사용자 정보 가져오기
-    final user = context.watch<UserProvider>().currentUser;
+    final userProvider = context.watch<UserProvider>();
+    final user = userProvider.currentUser;
+    final userId = user?.uid;
 
     return Scaffold(
-      // 1. 상단 고정 바 (AppBar)
       appBar: AppBar(
         title: const Text("Smart Campus 360"),
         actions: [
-          // 로그아웃 버튼
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () {
-              // 로그아웃 로직 (전광판 비우기 + 화면 이동)
               context.read<UserProvider>().clearUser();
-              Navigator.pushReplacement(
-                context, 
-                MaterialPageRoute(builder: (_) => const LoginScreen())
-              );
+              Navigator.pushReplacement(context,
+                  MaterialPageRoute(builder: (_) => const LoginScreen()));
             },
           ),
         ],
       ),
-      
-      // 2. 본문 (Body)
       body: Padding(
-        padding: const EdgeInsets.all(20.0), // 전체 여백 추가
+        padding: const EdgeInsets.all(20.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start, // 왼쪽 정렬
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 1. 상단 환영 메시지
             Text(
-              "안녕하세요, ${user?.name ?? '학우'}님! 🌱", 
+              "안녕하세요, ${user?.name ?? '학우'}님! 🌱",
               style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             Align(
-              alignment: AlignmentGeometry.centerRight,
+              alignment: Alignment.centerRight,
               child: Padding(
                 padding: const EdgeInsets.only(right: 10.0),
                 child: Text(
-                  user?.department != null ? "${user!.department} 전공" : "소속 미정", 
-                  style: const TextStyle(fontSize: 16, color: Colors.blueGrey)
+                    user?.department != null
+                        ? "${user!.department} 전공"
+                        : "소속 미정",
+                    style:
+                        const TextStyle(fontSize: 16, color: Colors.blueGrey)),
+              ),
+            ),
+            const SizedBox(height: 20),
+            const Text("최근 예약한 강의실",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+            if (userId != null)
+              _buildRecentReservation(userId)
+            else
+              const Card(
+                margin: EdgeInsets.only(top: 10),
+                child: ListTile(
+                  leading: Icon(Icons.history, color: Colors.orange),
+                  title: Text("로그인 정보가 없어 기록을 볼 수 없습니다."),
                 ),
               ),
+            const SizedBox(height: 30),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text("이용 가능한 공간",
+                    style:
+                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                TextButton(
+                  onPressed: () {
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (_) => const MapScreen()));
+                  },
+                  child: const Text("지도에서 보기 →"),
+                ),
+              ],
             ),
-
-            const SizedBox(height: 30), // 간격 띄우기
-
-            // 최근 예약한 강의실 // 아직은 모양만!!
-            const Text("최근 예약한 강의실", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-            const Card(
-              margin: EdgeInsets.only(top: 10),
-              child: ListTile(
-                leading: Icon(Icons.history, color: Colors.orange),
-                title: Text("최근 예약 기록이 없습니다."),
-              ),
-            ),
-
-            const SizedBox(height: 80), // 약간 아래로 밀기 // 나중에 수정할지도..
-
-            // 2. 공간 찾아보기 버튼 (지도로 이동)
-            const Text("원하는 공간을 찾아보세요!", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
-            SizedBox(
-              width: double.infinity, // 버튼 꽉 채우기
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  // 지도 화면으로 이동
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => const MapScreen()));
-                },
-                icon: const Icon(Icons.map),
-                label: const Text("지도에서 공간 찾기"),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 15), 
-                  textStyle: const TextStyle(fontSize: 18)
-                ),
-              ),
+            Expanded(
+              child: userId == null
+                  ? const Center(child: Text('로그인이 필요합니다'))
+                  : StreamBuilder<DocumentSnapshot>(
+                      stream: FirebaseFirestore.instance
+                          .collection('users')
+                          .doc(userId)
+                          .snapshots(),
+                      builder: (context, userSnapshot) {
+                        if (userSnapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(
+                              child: CircularProgressIndicator());
+                        }
+
+                        List<String> userFavorites = [];
+                        if (userSnapshot.hasData && userSnapshot.data != null) {
+                          final userData = userSnapshot.data!.data()
+                              as Map<String, dynamic>?;
+                          if (userData != null &&
+                              userData['favoriteSpaces'] != null) {
+                            userFavorites =
+                                List<String>.from(userData['favoriteSpaces']);
+                          }
+                        }
+
+                        return StreamBuilder<QuerySnapshot>(
+                          stream: FirebaseFirestore.instance
+                              .collection('spaces')
+                              .snapshots(),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return const Center(
+                                child: CircularProgressIndicator(),
+                              );
+                            }
+                            if (snapshot.hasError) {
+                              return Center(
+                                child: Text('오류 발생: ${snapshot.error}'),
+                              );
+                            }
+                            if (!snapshot.hasData ||
+                                snapshot.data!.docs.isEmpty) {
+                              return const Center(child: Text('등록된 공간이 없습니다'));
+                            }
+
+                            final spaces = snapshot.data!.docs;
+
+                            return ListView.builder(
+                              itemCount: spaces.length,
+                              itemBuilder: (context, index) {
+                                final spaceDoc = spaces[index];
+                                final space =
+                                    spaceDoc.data() as Map<String, dynamic>;
+                                final spaceId = spaceDoc.id;
+
+                                final isFavorite =
+                                    userFavorites.contains(spaceId);
+
+                                return Card(
+                                  margin: const EdgeInsets.only(bottom: 12),
+                                  elevation: 3,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: InkWell(
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) =>
+                                              DetailScreen(space: space),
+                                        ),
+                                      );
+                                    },
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(12),
+                                      child: Row(
+                                        children: [
+                                          ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                            child: Image.network(
+                                              space['image'] ??
+                                                  space['mainImageUrl'] ??
+                                                  '',
+                                              width: 80,
+                                              height: 80,
+                                              fit: BoxFit.cover,
+                                              errorBuilder:
+                                                  (context, error, stackTrace) {
+                                                return Container(
+                                                  width: 80,
+                                                  height: 80,
+                                                  color: Colors.grey[300],
+                                                  child: const Icon(Icons.image,
+                                                      size: 40),
+                                                );
+                                              },
+                                            ),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  space['name'] ?? '이름 없음',
+                                                  style: const TextStyle(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Row(
+                                                  children: [
+                                                    const Icon(
+                                                        Icons.location_on,
+                                                        size: 14,
+                                                        color: Colors.grey),
+                                                    const SizedBox(width: 4),
+                                                    Expanded(
+                                                      child: Text(
+                                                        space['location'] ??
+                                                            '위치 미정',
+                                                        style: const TextStyle(
+                                                          fontSize: 13,
+                                                          color: Colors.grey,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                const SizedBox(height: 2),
+                                                Row(
+                                                  children: [
+                                                    const Icon(Icons.people,
+                                                        size: 14,
+                                                        color: Colors.grey),
+                                                    const SizedBox(width: 4),
+                                                    Text(
+                                                      '수용 인원: ${space['capacity'] ?? 0}명',
+                                                      style: const TextStyle(
+                                                        fontSize: 13,
+                                                        color: Colors.grey,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              IconButton(
+                                                icon: Icon(
+                                                  isFavorite
+                                                      ? Icons.star
+                                                      : Icons.star_border,
+                                                  color: isFavorite
+                                                      ? Colors.amber
+                                                      : Colors.grey,
+                                                  size: 28,
+                                                ),
+                                                onPressed: () =>
+                                                    _toggleFavorite(context,
+                                                        spaceId, isFavorite),
+                                              ),
+                                              const SizedBox(height: 8),
+                                              const Icon(
+                                                  Icons.arrow_forward_ios,
+                                                  size: 16,
+                                                  color: Colors.grey),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                        );
+                      },
+                    ),
             ),
-            const SizedBox(height: 20), // 바닥에서 살짝 띄우기
           ],
         ),
       ),
-      
-      // 3. 플로팅 버튼 챗봇? (나중에 구현 예정)
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // 챗봇 열기...
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('챗봇은 추후 구현 예정입니다')),
+          );
         },
         child: const Icon(Icons.chat),
       ),
