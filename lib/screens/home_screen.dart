@@ -10,7 +10,7 @@ import 'detail_screen.dart';
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
-  // 👇 최근 예약 기록을 가져오는 StreamBuilder를 반환하는 메서드
+  // 최근 예약 기록을 가져오는 StreamBuilder를 반환하는 메서드
   Widget _buildRecentReservation(String userId) {
     return StreamBuilder<QuerySnapshot>(
       // 1. reservations 컬렉션에서 현재 userId와 일치하는 문서를 조회
