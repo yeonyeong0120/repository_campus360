@@ -78,7 +78,7 @@ class _ReservationScreenState extends State<ReservationScreen> {
         'spaceName': widget.space['name'],
         'date': dateString,
         'timeSlot': _selectedTime,
-        'status': 'confirmed',
+        'status': 'pending',
         // 💡💡💡 최종 수정: DateTime 객체를 명시적으로 Timestamp로 변환하여 저장
         // 이 필드가 누락되거나 타입이 잘못되어 홈 화면 조회가 실패했습니다.
         'startTime': Timestamp.fromDate(startTimeDateTime),
@@ -89,7 +89,10 @@ class _ReservationScreenState extends State<ReservationScreen> {
       if (mounted) {
         // 성공 알림 -> 홈으로 이동
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("예약이 완료되었습니다!")),
+          const SnackBar(
+            content: Text("예약이 완료되었습니다!"),
+            backgroundColor: Colors.green,
+          ),
         );
         // 메인 화면으로 돌아가 최근 예약 기록을 확인하도록 유도
         Navigator.of(context).popUntil((route) => route.isFirst);
