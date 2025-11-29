@@ -7,6 +7,7 @@ import 'package:repository_campus360/screens/home_screen.dart';
 import '../models/user_model.dart';
 import '../providers/user_provider.dart';
 import 'signup_screen.dart'; // 회원가입 화면 연결
+import 'admin_screen.dart'; // 어드민 연결
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -41,10 +42,18 @@ class _LoginScreenState extends State<LoginScreen> {
         if (mounted) {
           context.read<UserProvider>().setUser(userModel);
           if (mounted) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (_) => const HomeScreen()),
-            );
+            // Role이 admin이면 관리자 페이지로, 아니면 홈으로~~
+            if (userModel.role == 'admin') {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const AdminScreen()), // 관리자 페이지로 납치!
+              );
+            } else {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const HomeScreen()), // 학생은 홈으로
+              );
+            }
           }
 
           // 6. 성공 메시지 띄우기
