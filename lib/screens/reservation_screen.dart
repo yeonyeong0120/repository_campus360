@@ -89,17 +89,14 @@ class _ReservationScreenState extends State<ReservationScreen> {
       if (mounted) {
         // 성공 알림 -> 홈으로 이동
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("예약이 완료되었습니다!"),
-            backgroundColor: Colors.green,
-          ),
+          const SnackBar(content: Text("예약 신청이 완료되었습니다!")),
         );
         // 메인 화면으로 돌아가 최근 예약 기록을 확인하도록 유도
         Navigator.of(context).popUntil((route) => route.isFirst);
       }
     } catch (e) {
       if (mounted) {
-        // FirebaseException 오류가 발생했을 때 정확히 알려줍니다.
+        // 오류 발생했을때 머가 문제인지 정확하게
         String errorMessage = "알 수 없는 예약 실패 오류";
         if (e is FirebaseException) {
           errorMessage = "Firebase 오류: ${e.message}";
@@ -196,7 +193,7 @@ class _ReservationScreenState extends State<ReservationScreen> {
                   textStyle: const TextStyle(
                       fontSize: 18, fontWeight: FontWeight.bold),
                 ),
-                child: const Text("예약 확정하기"),
+                child: const Text("예약 신청하기"),
               ),
             ),
           ],
