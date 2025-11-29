@@ -11,7 +11,7 @@ import 'reservation_detail_screen.dart';
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
-  // 👇 취소된 예약 제외하고 최근 예약 기록 가져오기 (수정됨!)
+  // 👇 최근 예약 기록 (실시간 업데이트)
   Widget _buildRecentReservation(String userId) {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
@@ -40,7 +40,6 @@ class HomeScreen extends StatelessWidget {
           );
         }
 
-        // 👇 취소되지 않은 예약만 필터링 (클라이언트에서)
         final validReservations = snapshot.data!.docs.where((doc) {
           final data = doc.data() as Map<String, dynamic>;
           final status = data['status'] as String?;
@@ -57,8 +56,15 @@ class HomeScreen extends StatelessWidget {
           );
         }
 
-        final reservation =
-            validReservations.first.data() as Map<String, dynamic>;
+        // 👇 문서 자체를 저장
+        final reservationDoc = validReservations.first;
+        final reservation = reservationDoc.data() as Map<String, dynamic>;
+
+        // 👇 문서 ID를 맵에 추가!
+        final reservationWithId = {
+          ...reservation,
+          'docId': reservationDoc.id, // 👈 문서 ID 추가!
+        };
 
         final Timestamp startTimeStamp = reservation['startTime'] as Timestamp;
         final DateTime startTime = startTimeStamp.toDate();
@@ -79,7 +85,7 @@ class HomeScreen extends StatelessWidget {
                 context,
                 MaterialPageRoute(
                   builder: (_) => ReservationDetailScreen(
-                    reservation: reservation,
+                    reservation: reservationWithId, // 👈 문서 ID 포함!
                   ),
                 ),
               );

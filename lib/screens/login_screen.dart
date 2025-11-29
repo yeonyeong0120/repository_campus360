@@ -23,44 +23,46 @@ class _LoginScreenState extends State<LoginScreen> {
       // 1. Firebase 로그인 시도
       UserCredential userCredential = await FirebaseAuth.instance
           .signInWithEmailAndPassword(
-              email: _emailController.text,
-              password: _passwordController.text
-          );
+              email: _emailController.text, password: _passwordController.text);
 
       // 2. 로그인 된 유저의 UID 가져오기
       String uid = userCredential.user!.uid;
 
       // 3. Firestore에서 내 정보(학과, 이름 등) 가져오기
-      DocumentSnapshot userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .get();
+      DocumentSnapshot userDoc =
+          await FirebaseFirestore.instance.collection('users').doc(uid).get();
 
       // 4. 가져온 정보를 UserModel로 변환
       if (userDoc.exists) {
-        UserModel userModel = UserModel.fromMap(userDoc.data() as Map<String, dynamic>);
+        UserModel userModel =
+            UserModel.fromMap(userDoc.data() as Map<String, dynamic>);
 
         // 5. 전광판(Provider)에 내 정보 등록!
         if (mounted) {
           context.read<UserProvider>().setUser(userModel);
           if (mounted) {
-             Navigator.pushReplacement(
-               context,
-               MaterialPageRoute(builder: (_) => const HomeScreen()),
-             );
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const HomeScreen()),
+            );
           }
 
           // 6. 성공 메시지 띄우기
           ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text("${userModel.name}님 환영합니다! 로그인 성공!"))
+            SnackBar(
+              content: Text(
+                "${userModel.name}님 환영합니다! 로그인 성공!",
+                style: const TextStyle(color: Colors.black), // 👈 검정색 폰트
+              ),
+              backgroundColor: Colors.greenAccent,
+            ),
           );
         }
       }
     } on FirebaseAuthException catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("로그인 실패: ${e.message}"))
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text("로그인 실패: ${e.message}")));
       }
     }
   }
@@ -85,7 +87,7 @@ class _LoginScreenState extends State<LoginScreen> {
               obscureText: true,
             ),
             const SizedBox(height: 30),
-            
+
             // 로그인 버튼
             SizedBox(
               width: double.infinity, // 버튼 꽉 채우기
@@ -95,9 +97,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: const Text("로그인", style: TextStyle(fontSize: 18)),
               ),
             ),
-            
+
             const SizedBox(height: 10),
-            
+
             // 회원가입 버튼
             TextButton(
               onPressed: () {
