@@ -1,8 +1,11 @@
 // lib/screens/detail_screen.dart
 import 'package:flutter/material.dart';
+import 'package:repository_campus360/widgets/common_image.dart';
 import 'reservation_screen.dart';
-import 'webview_screen.dart'; // 💡 360도 뷰어 연동을 위한 화면 임포트
+import 'webview_screen.dart'; // 360도 뷰어 연동
 import 'repair_screen.dart'; // 공간수리요청 페이지연결
+
+
 
 class DetailScreen extends StatelessWidget {
   // 강의실 정보는 검색 결과화면에서 전달받음
@@ -23,15 +26,11 @@ class DetailScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 1. 강의실 이미지 (이미지가 없으면 회색 박스로 대체)
-            Container(
+            // 강의실 이미지 // 없으면 위젯에서 불러옴
+            SizedBox(
               width: double.infinity,
               height: 250,
-              color: Colors.grey[300],
-              child: space['image'] != null && space['image'].isNotEmpty
-                  ? Image.network(space['image'], fit: BoxFit.cover)
-                  : const Icon(Icons.image_not_supported,
-                      size: 50, color: Colors.grey),
+              child: CommonImage(space['image']),
             ),
 
             Padding(
@@ -113,7 +112,7 @@ class DetailScreen extends StatelessWidget {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                                 content: Text(
-                                    "360도 뷰어 URL이 등록되지 않았습니다. Unity 콘텐츠 팀원에게 요청하세요.")),
+                                    "360도 뷰어 URL이 등록되지 않았습니다.")),
                           );
                         }
                       },

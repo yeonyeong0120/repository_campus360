@@ -106,5 +106,9 @@ flutter:
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: true
-  image_path: "assets/images/logo.png"
+  #image_path: "assets/images/logo.png"
+  image_path: "assets/images/logo_1024.png" # iOS용
+  adaptive_icon_background: "#FFFFFF"  # 배경색
+  adaptive_icon_foreground: "assets/images/logo_1024.png" # 튜명배경해야함
+  
   min_sdk_android: 21

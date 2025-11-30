@@ -3,6 +3,7 @@
 // nextId -> 다음질문 // answer -> 종착지?
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:repository_campus360/widgets/common_image.dart';
 
 class ChatbotSheet extends StatefulWidget {
   const ChatbotSheet({super.key});
@@ -38,7 +39,7 @@ class _ChatbotSheetState extends State<ChatbotSheet> {
     }
   }
 
-  // [기능] 다시 처음으로 돌아가기 (초기화)
+  // 처음으로 돌아가기
   void _resetChat() {
     setState(() {
       _currentDocId = 'start';
@@ -134,15 +135,11 @@ class _ChatbotSheetState extends State<ChatbotSheet> {
                         if (_selectedImage != null && _selectedImage!.isNotEmpty)
                           Padding(
                             padding: const EdgeInsets.only(top: 10, left: 10),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(10),
-                              child: Container(
-                                color: Colors.grey[200],
-                                width: 200,
-                                height: 150,
-                                // 나중에 assets 이미지가 준비되면 Image.asset(_selectedImage!)로 변경하면 됨
-                                child: _buildSmartImage(_selectedImage!),
-                              ),
+                            child: CommonImage(
+                              _selectedImage,
+                              width: 200,
+                              height: 150,
+                              borderRadius: 10.0,
                             ),
                           ),
 
@@ -200,24 +197,6 @@ class _ChatbotSheetState extends State<ChatbotSheet> {
     );
   }
 
-  // DB랑 이미지파일 연결
-  Widget _buildSmartImage(String path) {
-    if (path.startsWith('assets/')) {
-      return Image.asset(
-        path,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return const Center(child: Text("이미지 파일 없음"));
-        },
-      );
-    } else {
-      return Image.network(
-        path,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return const Center(child: Icon(Icons.broken_image));
-        },
-      );
-    }
-  }
+  
+  
 }
