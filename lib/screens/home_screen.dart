@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../providers/user_provider.dart';
-import 'login_screen.dart';
 import 'map_screen.dart';
 import 'detail_screen.dart';
 import 'reservation_detail_screen.dart';
 import 'chatbot_sheet.dart'; // 챗봇
+import 'my_history_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -140,11 +140,12 @@ class HomeScreen extends StatelessWidget {
         title: const Text("Smart Campus 360"),
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout),
+            icon: const Icon(Icons.menu),
             onPressed: () {
-              context.read<UserProvider>().clearUser();
-              Navigator.pushReplacement(context,
-                  MaterialPageRoute(builder: (_) => const LoginScreen()));
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const MyHistoryScreen()),
+              );
             },
           ),
         ],
