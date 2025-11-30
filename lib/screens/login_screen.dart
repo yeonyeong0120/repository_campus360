@@ -61,9 +61,9 @@ class _LoginScreenState extends State<LoginScreen> {
             SnackBar(
               content: Text(
                 "${userModel.name}님 환영합니다! 로그인 성공!",
-                style: const TextStyle(color: Colors.black), // 👈 검정색 폰트
+                style: const TextStyle(color: Colors.white), // 👈 검정색 폰트
               ),
-              backgroundColor: Colors.greenAccent,
+              backgroundColor: const Color.fromARGB(255, 32, 51, 74),
             ),
           );
         }
@@ -72,6 +72,37 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text("로그인 실패: ${e.message}")));
+      }
+    }
+  }
+
+  // [추가] 비밀번호 재설정 메일 발송 함수
+  void _handleFindPassword() async {
+    final email = _emailController.text.trim();
+
+    // 1. 이메일 입력 확인
+    if (email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("비밀번호를 찾을 이메일을 위 입력창에 적어주세요.")),
+      );
+      return;
+    }
+
+    try {
+      // 2. Firebase에게 메일 발송 요청 (이게 핵심 코드!)
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("재설정 이메일을 보냈습니다! 메일함을 확인해주세요.")),
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      // 3. 에러 처리 (예: 가입되지 않은 이메일 등)
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("발송 실패: ${e.message}")),
+        );
       }
     }
   }
@@ -108,19 +139,30 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
 
-            const SizedBox(height: 10),
+            const SizedBox(height: 15),
 
-            // 회원가입 버튼
-            TextButton(
-              onPressed: () {
-                // 회원가입 화면으로 이동
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const SignupScreen()),
-                );
-              },
-              child: const Text("계정이 없으신가요? 회원가입"),
-            )
+            // 회원가입 버튼  // + 비번찾기
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const SignupScreen()),
+                    );
+                  },
+                  child: const Text("회원가입", style: TextStyle(color: Colors.blue)), // 강조색
+                ),
+                const Text("|", style: TextStyle(color: Colors.grey)), // 구분선  
+                TextButton(
+                  onPressed: _handleFindPassword, // 비번찾기 함수
+                  child: const Text("비밀번호 찾기", style: TextStyle(color: Colors.grey)),
+                ),                
+                              
+                
+              ], // children
+            ),
           ],
         ),
       ),
