@@ -10,7 +10,11 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
-  double _peopleCount = 10.0; // 인원수 슬라이더용 변수  
+  double _peopleCount = 10.0; // 인원수 슬라이더용 변수
+
+  // 지도 원본 크기 저장용
+  final double mapWidth = 2304.0;
+  final double mapHeight = 1856.0;
 
   // 층별 리스트 아이템 디자인
   Widget _buildFloorTile(String floor, String description) {
@@ -36,75 +40,89 @@ class _MapScreenState extends State<MapScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("캠퍼스 맵")),
-      body: Stack(
-        children: [
-          // 확대/축소 지도 영역 // InteractiveViewer
-          InteractiveViewer(
-            minScale: 0.5, // 최소 축소 배율
-            maxScale: 4.0, // 최대 확대 배율
-            child: Stack( // 지도 이미지와 핀을 한 묶음으로 묶기 위해 또 Stack 사용
-              children: [
-                // 1-1. 지도 이미지 (바닥)
-                Image.asset(
-                  'assets/images/campusMap.png',
-                  width: 2304, // 확대했을 때 깨지지 않게 넉넉한 크기 지정
-                  height: 1856,
-                  fit: BoxFit.cover,
-                ),
-
-                // 1-2. 건물 핀 배치 // 미세조정 필요
-                Positioned(
-                  left: 250, // 이미지 기준 가로 위치 (조절 필요)
-                  top: 300,  // 이미지 기준 세로 위치 (조절 필요)
-                  child: _buildMapPin("하이테크관"),
-                ),
-                
-                Positioned(
-                  left: 500,
-                  top: 450,
-                  child: _buildMapPin("5기술관"),
-                ),
-              ],
-            ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: AlignmentGeometry.topCenter,
+            end: AlignmentGeometry.bottomCenter,
+            colors: [
+              Color.fromARGB(255, 165, 243, 255), // 매우 진한 파랑 (위쪽)
+              Color.fromARGB(255, 193, 224, 241), // 조금 밝은 파랑 (아래쪽)
+              // 또는 원하시는 다른 색상 코드를 넣으셔도 됩니다.
+            ],
           ),
-
-          // 필터 버튼
-          Positioned(
-            top: 20,
-            right: 20,
-            child: FloatingActionButton(
-              mini: true,
-              backgroundColor: Colors.white,
-              foregroundColor: Colors.black,
-              onPressed: () => _showFilterModal(context), // 기존 필터 함수 연결
-              child: const Icon(Icons.filter_list),
+        ),
+        child: Stack(
+          children: [
+            // 확대/축소 지도 영역 // InteractiveViewer
+            InteractiveViewer(
+              minScale: 1.0, // 최소 1배
+              maxScale: 5.0, // 최대 5배까지 확대
+              child: Center(
+                child: AspectRatio(
+                  aspectRatio: mapWidth / mapHeight, // 비율을 고정
+                  child: Stack(
+                    children: [
+                      // 1-1. 지도 이미지
+                      Image.asset(
+                        'assets/images/campusMap.png',
+                        width: double.infinity,
+                        height: double.infinity,
+                        fit: BoxFit.cover,
+                      ),
+        
+                      // 1-2. 건물 핀 배치 // 픽셀좌표 그림판에서 볼수잇숨
+                      _buildMapPin(2088, 489, "하이테크관"),                    
+                      _buildMapPin(1162, 496, "대학 본관"),
+                    ],
+                  ),
+                ),
+              ),
             ),
-          ),
-        ],
+        
+            // 필터 버튼
+            Positioned(
+              top: 20,
+              right: 20,
+              child: FloatingActionButton(
+                mini: true,
+                backgroundColor: Colors.white,
+                foregroundColor: const Color.fromARGB(255, 22, 54, 109),
+                onPressed: () => _showFilterModal(context), // 기존 필터 함수 연결
+                child: const Icon(Icons.filter_alt),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   //-------------메서드 모음들--------///
   // 핀 디자인을 만드는 함수
-  Widget _buildMapPin(String name) {
-    return GestureDetector(
-      onTap: () => _showBuildingDetail(name), // 핀을 누르면 상세창(B안) 띄우기!
-      child: Column(
-        children: [
-          const Icon(Icons.location_on, color: Colors.red, size: 40),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: [
-                BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 4, offset: const Offset(0, 2))
-              ],
+  Widget _buildMapPin(double x, double y, String name) {
+    return Align(
+      // 화면 크기가 변해도 핀 위치가 지도상의 정확한 곳에 고정됩니다.
+      alignment: FractionalOffset(x / mapWidth, y / mapHeight),
+      child: GestureDetector(
+        onTap: () => _showBuildingDetail(name),
+        child: Column(
+          mainAxisSize: MainAxisSize.min, // 핀 크기만큼만 차지하게
+          children: [
+            const Icon(Icons.location_on_rounded, color: Colors.redAccent, size: 25),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(color: Colors.black.withValues(alpha: .2), blurRadius: 4, offset: const Offset(0, 2))
+                ],
+              ),
+              child: Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 8)),
             ),
-            child: Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
