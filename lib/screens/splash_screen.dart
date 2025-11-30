@@ -8,6 +8,7 @@ import '../models/user_model.dart';
 import 'login_screen.dart';
 import 'home_screen.dart';
 import 'admin_screen.dart';
+import 'dart:math' as math;
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -26,6 +27,9 @@ class _SplashScreenState extends State<SplashScreen> {
   Future<void> _checkLoginStatus() async {
     await Future.delayed(const Duration(seconds: 2));
 
+    // [테스트용] 앱 켤 때마다 강제 로그아웃 (나중에 주석 처리 하세요!)
+    await FirebaseAuth.instance.signOut();
+
     // 로그인 사용자 확인
     final user = FirebaseAuth.instance.currentUser;
 
@@ -39,20 +43,17 @@ class _SplashScreenState extends State<SplashScreen> {
 
         if (userDoc.exists && mounted) {
           // 정보가 있으면 Provider에 등록
-          UserModel userModel = UserModel.fromMap(userDoc.data() as Map<String, dynamic>);
+          UserModel userModel =
+              UserModel.fromMap(userDoc.data() as Map<String, dynamic>);
           context.read<UserProvider>().setUser(userModel);
 
           // 직급(role)에 따라 화면 분기 처리
           if (userModel.role == 'admin') {
-            Navigator.pushReplacement(
-              context, 
-              MaterialPageRoute(builder: (_) => const AdminScreen())
-            );
+            Navigator.pushReplacement(context,
+                MaterialPageRoute(builder: (_) => const AdminScreen()));
           } else {
             Navigator.pushReplacement(
-              context, 
-              MaterialPageRoute(builder: (_) => const HomeScreen())
-            );
+                context, MaterialPageRoute(builder: (_) => const HomeScreen()));
           }
         } else {
           // DB에 정보가 없으면 로그아웃 시키고 로그인 화면으로
@@ -80,38 +81,97 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white, // 배경색 흰색
-      body: Center(
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFFE3F2FD), // 상단: 아주 연한 하늘색
+              Colors.white, // 하단: 깔끔한 흰색
+            ],
+          ),
+        ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // 1. 로고 이미지
-            Image.asset(
-              'assets/images/logo.png', 
-              width: 200, // 크기 조절
-              height: 200,
-              errorBuilder: (context, error, stackTrace) {
-                // 이미지가 없을 경우...
-                return const Icon(Icons.school, size: 100, color: Colors.blue);
-              },
-            ),
-            const SizedBox(height: 5),
-            
-            // 2. 앱 이름 텍스트
-            const Text(              
-              "Campus Room\n360",
-              textAlign: TextAlign.center,
-              style: TextStyle(                
-                fontSize: 35,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF06679D),
-                letterSpacing: 1.2, // 글자 간격
+            // 💡 1. 아이콘 크기 (200) 및 기울기 (-6도) 유지
+            Transform.rotate(
+              angle: -6 * math.pi / 180,
+              child: Image.asset(
+                'assets/images/logo.png',
+                width: 200,
+                height: 200,
+                errorBuilder: (context, error, stackTrace) {
+                  return const Icon(Icons.school_rounded,
+                      size: 140, color: Color(0xFF1E88E5));
+                },
               ),
             ),
-            const SizedBox(height: 50),
-            
-            // 프로그래스써클 표시
-            const CircularProgressIndicator(color: Colors.blue),
+
+            // 💡 2. 투명 여백 무시하고 강제로 붙이기
+            Transform.translate(
+              offset: const Offset(0, -30),
+              child: RichText(
+                textAlign: TextAlign.center,
+                text: TextSpan(
+                  // 🌟 [수정 완료] 여기 폰트 이름을 'manru'로 바꿨습니다!
+                  style: const TextStyle(
+                    fontFamily: 'manru', // 이제 앱 전체 설정과 똑같이 만루체 적용!
+                    color: Color(0xFF0D47A1),
+                    letterSpacing: 1.0,
+                  ),
+                  children: [
+                    TextSpan(
+                      text: "Campus Room\n",
+                      style: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.w700,
+                        height: 1.2,
+                        shadows: [
+                          Shadow(
+                            color: Colors.blue.withOpacity(0.2),
+                            offset: const Offset(2, 2),
+                            blurRadius: 4,
+                          ),
+                        ],
+                      ),
+                    ),
+                    TextSpan(
+                      text: "360",
+                      style: TextStyle(
+                        fontSize: 52,
+                        fontWeight: FontWeight.w900, // 숫자는 더 굵게!
+                        color: const Color(0xFF2196F3),
+                        shadows: [
+                          Shadow(
+                            color: Colors.blueAccent.withOpacity(0.3),
+                            offset: const Offset(3, 3),
+                            blurRadius: 6,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 60),
+
+            // 3. 로딩 인디케이터
+            SizedBox(
+              width: 30,
+              height: 30,
+              child: CircularProgressIndicator(
+                valueColor:
+                    const AlwaysStoppedAnimation<Color>(Color(0xFF2196F3)),
+                strokeWidth: 3,
+                backgroundColor: Colors.white.withOpacity(0.5),
+              ),
+            ),
           ],
         ),
       ),
