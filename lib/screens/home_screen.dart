@@ -396,7 +396,7 @@ class HomeScreen extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // 챗봇 바텀 시트
+          // 바텀 시트
           showModalBottomSheet(
             context: context,
             isScrollControlled: true, // 화면 반 이상 올라오게...

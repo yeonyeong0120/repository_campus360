@@ -5,7 +5,8 @@ import 'package:repository_campus360/screens/login_screen.dart';
 import 'providers/user_provider.dart';
 import 'firebase_options.dart'; // flutterfire configure가 생성한 파일
 import 'package:intl/date_symbol_data_local.dart'; 
-import 'package:flutter_localizations/flutter_localizations.dart'; // [추가]
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'screens/splash_screen.dart'; // 스플래시
 
 void main() async {
   // Firebase가 네이티브 코드를 먼저 초기화
@@ -49,7 +50,7 @@ class Campus360App extends StatelessWidget {
       // 기본 Locale을 한국어로 설정
       locale: const Locale('ko', 'KR'),
 
-      home: const LoginScreen(),
+      home: const SplashScreen(),
     );
   }
 }
