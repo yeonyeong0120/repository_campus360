@@ -42,12 +42,12 @@ dependencies:
   provider: ^6.1.5+1
   table_calendar: ^3.2.0
   intl: ^0.20.2
-  # 💡 360도 뷰어 WebGL 연동을 위한 웹뷰 패키지 추가 (WebViewScreen에 사용)
-  webview_flutter: ^4.2.0 
+  webview_flutter: ^4.2.0  # 360도 뷰어 WebGL 연동을 위한 웹뷰 패키지
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_launcher_icons: ^0.13.1
   url_launcher: ^6.2.1
 
   # The "flutter_lints" package below contains a set of recommended lints to
@@ -101,3 +101,10 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+# 앱 아이콘
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/images/logo.png"
+  min_sdk_android: 21

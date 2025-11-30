@@ -12,7 +12,7 @@ import 'my_history_screen.dart';
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
-  // 👇 최근 예약 기록 (실시간 업데이트)
+  // 최근 예약 기록 // 실시간
   Widget _buildRecentReservation(String userId) {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
