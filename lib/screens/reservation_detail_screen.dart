@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'package:repository_campus360/widgets/common_image.dart';
 import 'webview_screen.dart';
 
 class ReservationDetailScreen extends StatelessWidget {
@@ -85,46 +86,13 @@ class ReservationDetailScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (imageUrl.isNotEmpty)
-                        ClipRRect(
-                          borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(12),
-                          ),
-                          child: Image.network(
-                            imageUrl,
-                            width: double.infinity,
-                            height: 180,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Container(
-                                height: 180,
-                                color: Colors.grey[300],
-                                child: const Icon(
-                                  Icons.image_not_supported,
-                                  size: 60,
-                                  color: Colors.grey,
-                                ),
-                              );
-                            },
-                          ),
-                        )
-                      else
-                        Container(
-                          height: 180,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[300],
-                            borderRadius: const BorderRadius.vertical(
-                              top: Radius.circular(12),
-                            ),
-                          ),
-                          child: const Center(
-                            child: Icon(
-                              Icons.image_not_supported,
-                              size: 60,
-                              color: Colors.grey,
-                            ),
-                          ),
-                        ),
+                      CommonImage(
+                        imageUrl, // 위에서 변수로 받은 주소
+                        width: double.infinity,
+                        height: 180,
+                        borderRadius: 12, // 전체 둥글게 해도 디자인상 괜찮습니다.
+                      ),
+
                       Padding(
                         padding: const EdgeInsets.all(16),
                         child: Column(
@@ -148,7 +116,7 @@ class ReservationDetailScreen extends StatelessWidget {
                           ],
                         ),
                       ),
-                    ],
+                    ],  // childern
                   ),
                 );
               },
