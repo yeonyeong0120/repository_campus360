@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
-import 'package:repository_campus360/screens/home_screen.dart';
+// 🛠 [수정] 상대 경로로 변경하여 import 에러 방지
+import 'home_screen.dart';
 import '../models/user_model.dart';
 import '../providers/user_provider.dart';
 import 'signup_screen.dart'; // 회원가입 화면 연결
@@ -47,12 +48,14 @@ class _LoginScreenState extends State<LoginScreen> {
             if (userModel.role == 'admin') {
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (_) => const AdminScreen()), // 관리자 페이지로 납치!
+                MaterialPageRoute(
+                    builder: (_) => const AdminScreen()), // 관리자 페이지로 납치!
               );
             } else {
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (_) => const HomeScreen()), // 학생은 홈으로
+                MaterialPageRoute(
+                    builder: (_) => const HomeScreen()), // 학생은 홈으로
               );
             }
           }
@@ -62,7 +65,8 @@ class _LoginScreenState extends State<LoginScreen> {
             SnackBar(
               content: Text(
                 "${userModel.name}님 환영합니다! 로그인 성공!",
-                style: const TextStyle(color: Colors.white), // 👈 검정색 폰트
+                style: const TextStyle(
+                    color: Colors.white, fontFamily: 'manru'), // 폰트 적용
               ),
               backgroundColor: const Color.fromARGB(255, 32, 51, 74),
             ),
@@ -77,68 +81,248 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  
-
   @override
   Widget build(BuildContext context) {
+    // 화면 크기 계산 (반응형 디자인을 위해)
+    final size = MediaQuery.of(context).size;
+
     return Scaffold(
-      appBar: AppBar(title: const Text("폴리텍 로그인")),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      backgroundColor: Colors.white, // 전체 배경 흰색
+      body: SingleChildScrollView(
+        // 키보드가 올라와도 스크롤 가능하게
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center, // 중앙 정렬
           children: [
-            TextField(
-              controller: _emailController,
-              decoration: const InputDecoration(labelText: "이메일"),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: _passwordController,
-              decoration: const InputDecoration(labelText: "비밀번호"),
-              obscureText: true,
-              onSubmitted: (_) => _handleLogin(), // 엔터키로 로그인
-            ),
-            const SizedBox(height: 30),
-
-            // 로그인 버튼
-            SizedBox(
-              width: double.infinity, // 버튼 꽉 채우기
-              height: 50,
-              child: ElevatedButton(
-                onPressed: _handleLogin,
-                child: const Text("로그인", style: TextStyle(fontSize: 18)),
-              ),
-            ),
-
-            const SizedBox(height: 15),
-
-            // 회원가입 버튼  // + 비번찾기
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            // 🎨 [디자인 1] 상단 곡선 헤더 영역
+            Stack(
               children: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const SignupScreen()),
-                    );
-                  },
-                  child: const Text("회원가입", style: TextStyle(color: Colors.blue)), // 강조색
+                // 파란색 그라데이션 배경
+                Container(
+                  // 🎨 로고가 커졌으므로 헤더 높이도 40% -> 45%로 살짝 늘려줌 (답답하지 않게)
+                  height: size.height * 0.40,
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Color(0xFF2196F3), Color(0xFF64B5F6)], // 브랜드 컬러
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.only(
+                      bottomLeft: Radius.circular(60), // 왼쪽 아래 둥글게
+                    ),
+                  ),
                 ),
-                const Text("|", style: TextStyle(color: Colors.grey)), // 구분선  
-                TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
-                    );
-                  },
-                  child: const Text("비밀번호 찾기", style: TextStyle(color: Colors.grey)),
+
+                // 배경 꾸미기 (반투명 원)
+                Positioned(
+                  top: -50,
+                  right: -50,
+                  child: Container(
+                    width: 200,
+                    height: 200,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
                 ),
-                              
-                
-              ], // children
+
+                // 로고 및 텍스트 (헤더 중앙 정렬)
+                Positioned.fill(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // 🌟 [유저 설정 유지] 3D 캐릭터 이미지 크기
+                      Container(
+                        child: Image.asset(
+                          'assets/images/logo_3d.png',
+                          width: 260, // 설정하신 값 유지
+                          height: 260, // 설정하신 값 유지
+                          // 만약 이미지가 없으면 아이콘 대체
+                          errorBuilder: (context, error, stackTrace) {
+                            return const Icon(Icons.calendar_month,
+                                size: 150, color: Colors.white);
+                          },
+                        ),
+                      ),
+
+                      // 이미지의 투명 여백 때문에 멀어 보이는 것을 해결하기 위해 Transform.translate 사용
+                      Transform.translate(
+                        offset: const Offset(0, -28), // 설정하신 값 유지
+                        child: Column(
+                          children: [
+                            const Text(
+                              "Smart Campus 360",
+                              style: TextStyle(
+                                fontSize: 33, // 설정하신 값 유지
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
+                                fontFamily: 'manru',
+                                letterSpacing: 1.0,
+                              ),
+                            ),
+
+                            // 🛠 [수정] 중복된 SizedBox 제거하고 하나만 남김
+                            const SizedBox(height: 5),
+
+                            const Text(
+                              "스마트한 대학 생활의 시작",
+                              style: TextStyle(
+                                fontSize: 20, // 설정하신 값 유지
+                                color: Colors.white70, // 살짝 투명하게
+                                fontFamily: 'manru',
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 40),
+
+            // 📝 입력 폼 영역
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 30.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "로그인",
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                      fontFamily: 'manru',
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // 🎨 [디자인 2] 이메일 입력창 (박스형)
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(16), // 더 둥글게
+                    ),
+                    child: TextField(
+                      controller: _emailController,
+                      style: const TextStyle(fontFamily: 'manru'),
+                      decoration: const InputDecoration(
+                        prefixIcon:
+                            Icon(Icons.email_outlined, color: Colors.grey),
+                        hintText: "이메일",
+                        hintStyle:
+                            TextStyle(color: Colors.grey, fontFamily: 'manru'),
+                        border: InputBorder.none, // 테두리 없애기
+                        contentPadding: EdgeInsets.symmetric(vertical: 16),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // 🎨 [디자인 2] 비밀번호 입력창 (박스형)
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: TextField(
+                      controller: _passwordController,
+                      obscureText: true,
+                      style: const TextStyle(fontFamily: 'manru'),
+                      onSubmitted: (_) => _handleLogin(), // 엔터키 로그인 유지
+                      decoration: const InputDecoration(
+                        prefixIcon:
+                            Icon(Icons.lock_outline, color: Colors.grey),
+                        hintText: "비밀번호",
+                        hintStyle:
+                            TextStyle(color: Colors.grey, fontFamily: 'manru'),
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(vertical: 16),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 30),
+
+                  // 🎨 [디자인 3] 로그인 버튼 (크고 둥글게)
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56, // 버튼 높이 키움
+                    child: ElevatedButton(
+                      onPressed: _handleLogin,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2196F3), // 브랜드 컬러
+                        foregroundColor: Colors.white,
+                        elevation: 8, // 그림자 진하게
+                        shadowColor: Colors.blueAccent.withOpacity(0.4),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20), // 둥글게
+                        ),
+                      ),
+                      child: const Text(
+                        "로그인",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'manru',
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // 하단 링크들 (회원가입, 비번찾기)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => const SignupScreen()),
+                          );
+                        },
+                        child: const Text(
+                          "회원가입",
+                          style: TextStyle(
+                            color: Color(0xFF2196F3),
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'manru',
+                          ),
+                        ),
+                      ),
+                      Container(
+                        height: 12,
+                        width: 1,
+                        color: Colors.grey[300],
+                        margin: const EdgeInsets.symmetric(horizontal: 12),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => const ForgotPasswordScreen()),
+                          );
+                        },
+                        child: const Text(
+                          "비밀번호 찾기",
+                          style: TextStyle(
+                              color: Colors.grey, fontFamily: 'manru'),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 40), // 하단 여백 확보
+                ],
+              ),
             ),
           ],
         ),
