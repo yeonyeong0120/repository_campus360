@@ -98,9 +98,10 @@ class _SplashScreenState extends State<SplashScreen> {
             const SizedBox(height: 5),
             
             // 2. 앱 이름 텍스트
-            const Text(
-              "Campus 360",
-              style: TextStyle(
+            const Text(              
+              "Campus Room\n360",
+              textAlign: TextAlign.center,
+              style: TextStyle(                
                 fontSize: 35,
                 fontWeight: FontWeight.bold,
                 color: Color(0xFF06679D),
