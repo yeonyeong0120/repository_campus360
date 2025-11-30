@@ -17,22 +17,22 @@ class _MapScreenState extends State<MapScreen> {
   final double mapHeight = 1856.0;
 
   // 층별 리스트 아이템 디자인
-  Widget _buildFloorTile(String floor, String description) {
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: CircleAvatar(
-        backgroundColor: Colors.blue[50],
-        child: Text(floor, style: const TextStyle(fontSize: 12, color: Colors.blue, fontWeight: FontWeight.bold)),
-      ),
-      title: Text(description),
-      trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
-      onTap: () {
-        // 특정 층을 눌러도 검색 화면으로 이동
-        Navigator.pop(context);
-        Navigator.push(context, MaterialPageRoute(builder: (_) => const SearchScreen()));
-      },
-    );
-  }
+  // Widget _buildFloorTile(String floor, String description) {
+  //   return ListTile(
+  //     contentPadding: EdgeInsets.zero,
+  //     leading: CircleAvatar(
+  //       backgroundColor: Colors.blue[50],
+  //       child: Text(floor, style: const TextStyle(fontSize: 12, color: Colors.blue, fontWeight: FontWeight.bold)),
+  //     ),
+  //     title: Text(description),
+  //     trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
+  //     onTap: () {
+  //       // 특정 층을 눌러도 검색 화면으로 이동
+  //       Navigator.pop(context);
+  //       Navigator.push(context, MaterialPageRoute(builder: (_) => const SearchScreen()));
+  //     },
+  //   );
+  // }
 
 
 
