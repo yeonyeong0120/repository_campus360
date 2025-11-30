@@ -7,6 +7,7 @@ import 'login_screen.dart';
 import 'map_screen.dart';
 import 'detail_screen.dart';
 import 'reservation_detail_screen.dart';
+import 'chatbot_sheet.dart'; // 챗봇
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -395,11 +396,15 @@ class HomeScreen extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('챗봇은 추후 구현 예정입니다')),
+          // 챗봇 바텀 시트
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true, // 화면 반 이상 올라오게...
+            backgroundColor: Colors.transparent, // 배경 투명 (둥근 모서리 위해)
+            builder: (context) => const ChatbotSheet(),
           );
         },
-        child: const Icon(Icons.chat),
+        child: const Icon(Icons.help_rounded),
       ),
     );
   }

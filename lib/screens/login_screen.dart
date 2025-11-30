@@ -8,6 +8,7 @@ import '../models/user_model.dart';
 import '../providers/user_provider.dart';
 import 'signup_screen.dart'; // 회원가입 화면 연결
 import 'admin_screen.dart'; // 어드민 연결
+import 'forgot_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -61,9 +62,9 @@ class _LoginScreenState extends State<LoginScreen> {
             SnackBar(
               content: Text(
                 "${userModel.name}님 환영합니다! 로그인 성공!",
-                style: const TextStyle(color: Colors.black), // 👈 검정색 폰트
+                style: const TextStyle(color: Colors.white), // 👈 검정색 폰트
               ),
-              backgroundColor: Colors.greenAccent,
+              backgroundColor: const Color.fromARGB(255, 32, 51, 74),
             ),
           );
         }
@@ -75,6 +76,8 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     }
   }
+
+  
 
   @override
   Widget build(BuildContext context) {
@@ -108,19 +111,35 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
 
-            const SizedBox(height: 10),
+            const SizedBox(height: 15),
 
-            // 회원가입 버튼
-            TextButton(
-              onPressed: () {
-                // 회원가입 화면으로 이동
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const SignupScreen()),
-                );
-              },
-              child: const Text("계정이 없으신가요? 회원가입"),
-            )
+            // 회원가입 버튼  // + 비번찾기
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const SignupScreen()),
+                    );
+                  },
+                  child: const Text("회원가입", style: TextStyle(color: Colors.blue)), // 강조색
+                ),
+                const Text("|", style: TextStyle(color: Colors.grey)), // 구분선  
+                TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
+                    );
+                  },
+                  child: const Text("비밀번호 찾기", style: TextStyle(color: Colors.grey)),
+                ),
+                              
+                
+              ], // children
+            ),
           ],
         ),
       ),
