@@ -8,6 +8,7 @@ import '../models/user_model.dart';
 import '../providers/user_provider.dart';
 import 'signup_screen.dart'; // 회원가입 화면 연결
 import 'admin_screen.dart'; // 어드민 연결
+import 'forgot_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -76,36 +77,7 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  // [추가] 비밀번호 재설정 메일 발송 함수
-  void _handleFindPassword() async {
-    final email = _emailController.text.trim();
-
-    // 1. 이메일 입력 확인
-    if (email.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("비밀번호를 찾을 이메일을 위 입력창에 적어주세요.")),
-      );
-      return;
-    }
-
-    try {
-      // 2. Firebase에게 메일 발송 요청 (이게 핵심 코드!)
-      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("재설정 이메일을 보냈습니다! 메일함을 확인해주세요.")),
-        );
-      }
-    } on FirebaseAuthException catch (e) {
-      // 3. 에러 처리 (예: 가입되지 않은 이메일 등)
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("발송 실패: ${e.message}")),
-        );
-      }
-    }
-  }
+  
 
   @override
   Widget build(BuildContext context) {
@@ -156,9 +128,14 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const Text("|", style: TextStyle(color: Colors.grey)), // 구분선  
                 TextButton(
-                  onPressed: _handleFindPassword, // 비번찾기 함수
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
+                    );
+                  },
                   child: const Text("비밀번호 찾기", style: TextStyle(color: Colors.grey)),
-                ),                
+                ),
                               
                 
               ], // children
