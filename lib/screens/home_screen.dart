@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:repository_campus360/widgets/common_image.dart';
 import '../providers/user_provider.dart';
 import 'map_screen.dart';
 import 'detail_screen.dart';
@@ -12,7 +13,7 @@ import 'my_history_screen.dart';
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
-  // 👇 최근 예약 기록 (실시간 업데이트)
+  // 최근 예약 기록 // 실시간
   Widget _buildRecentReservation(String userId) {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
@@ -282,28 +283,13 @@ class HomeScreen extends StatelessWidget {
                                       padding: const EdgeInsets.all(12),
                                       child: Row(
                                         children: [
-                                          ClipRRect(
-                                            borderRadius:
-                                                BorderRadius.circular(8),
-                                            child: Image.network(
-                                              space['image'] ??
-                                                  space['mainImageUrl'] ??
-                                                  '',
-                                              width: 80,
-                                              height: 80,
-                                              fit: BoxFit.cover,
-                                              errorBuilder:
-                                                  (context, error, stackTrace) {
-                                                return Container(
-                                                  width: 80,
-                                                  height: 80,
-                                                  color: Colors.grey[300],
-                                                  child: const Icon(Icons.image,
-                                                      size: 40),
-                                                );
-                                              },
-                                            ),
-                                          ),
+                                          CommonImage(
+                                          space['image'] ?? space['mainImageUrl'],
+                                          width: 80,
+                                          height: 80,
+                                          borderRadius: 8.0, // 👈 모서리 깎기도 한 방에!
+                                        ),
+
                                           const SizedBox(width: 12),
                                           Expanded(
                                             child: Column(
@@ -337,6 +323,7 @@ class HomeScreen extends StatelessWidget {
                                                     ),
                                                   ],
                                                 ),
+                                                
                                                 const SizedBox(height: 2),
                                                 Row(
                                                   children: [
