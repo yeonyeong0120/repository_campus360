@@ -132,7 +132,7 @@ class _SplashScreenState extends State<SplashScreen> {
                         height: 1.2,
                         shadows: [
                           Shadow(
-                            color: Colors.blue.withOpacity(0.2),
+                            color: Colors.blue.withValues(alpha: .2),
                             offset: const Offset(2, 2),
                             blurRadius: 4,
                           ),
@@ -147,7 +147,7 @@ class _SplashScreenState extends State<SplashScreen> {
                         color: const Color(0xFF2196F3),
                         shadows: [
                           Shadow(
-                            color: Colors.blueAccent.withOpacity(0.3),
+                            color: Colors.blueAccent.withValues(alpha: .3),
                             offset: const Offset(3, 3),
                             blurRadius: 6,
                           ),
@@ -169,7 +169,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 valueColor:
                     const AlwaysStoppedAnimation<Color>(Color(0xFF2196F3)),
                 strokeWidth: 3,
-                backgroundColor: Colors.white.withOpacity(0.5),
+                backgroundColor: Colors.white.withValues(alpha: .5),
               ),
             ),
           ],
