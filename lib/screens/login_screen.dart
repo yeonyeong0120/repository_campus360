@@ -21,7 +21,20 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
+  // 🛠 [추가] 중복 로그인 시도 방지를 위한 로딩 상태 변수
+  bool _isLoading = false;
+
   void _handleLogin() async {
+    // 🛠 [추가] 이미 로딩 중이면 함수 실행 막기 (중복 실행 방지)
+    if (_isLoading) return;
+
+    // 키보드 내리기
+    FocusScope.of(context).unfocus();
+
+    setState(() {
+      _isLoading = true; // 로딩 시작
+    });
+
     try {
       // 1. Firebase 로그인 시도
       UserCredential userCredential = await FirebaseAuth.instance
@@ -43,6 +56,28 @@ class _LoginScreenState extends State<LoginScreen> {
         // 5. 전광판(Provider)에 내 정보 등록!
         if (mounted) {
           context.read<UserProvider>().setUser(userModel);
+
+          // 🛠 [수정] SnackBar 중복 방지 및 FAB 고정을 위한 설정
+          // 기존 메시지가 있다면 제거 (두 번 뜨는 현상 방지)
+          ScaffoldMessenger.of(context).clearSnackBars();
+
+          // 6. 성공 메시지 띄우기 (화면 이동 전에 띄움)
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                "${userModel.name}님 환영합니다! 로그인 성공!",
+                style: const TextStyle(
+                    color: Colors.white, fontFamily: 'manru'), // 폰트 적용
+              ),
+              backgroundColor: const Color.fromARGB(255, 32, 51, 74),
+              // 🛠 [추가] SnackBar가 떠도 FAB가 밀리지 않도록 floating 설정
+              behavior: SnackBarBehavior.floating,
+              // 🛠 [추가] 하단에서 약간 띄워서 렌더링 (가려져도 상관없으므로 고정 효과)
+              margin: const EdgeInsets.only(bottom: 20, left: 16, right: 16),
+              duration: const Duration(seconds: 2), // 2초 뒤 사라짐
+            ),
+          );
+
           if (mounted) {
             // Role이 admin이면 관리자 페이지로, 아니면 홈으로~~
             if (userModel.role == 'admin') {
@@ -59,24 +94,19 @@ class _LoginScreenState extends State<LoginScreen> {
               );
             }
           }
-
-          // 6. 성공 메시지 띄우기
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                "${userModel.name}님 환영합니다! 로그인 성공!",
-                style: const TextStyle(
-                    color: Colors.white, fontFamily: 'manru'), // 폰트 적용
-              ),
-              backgroundColor: const Color.fromARGB(255, 32, 51, 74),
-            ),
-          );
         }
       }
     } on FirebaseAuthException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text("로그인 실패: ${e.message}")));
+      }
+    } finally {
+      // 🛠 [추가] 로딩 상태 해제 (성공하든 실패하든)
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
   }
@@ -253,7 +283,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     width: double.infinity,
                     height: 56, // 버튼 높이 키움
                     child: ElevatedButton(
-                      onPressed: _handleLogin,
+                      onPressed: _isLoading
+                          ? null
+                          : _handleLogin, // 🛠 [수정] 로딩 중이면 버튼 비활성화
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF2196F3), // 브랜드 컬러
                         foregroundColor: Colors.white,
@@ -263,14 +295,17 @@ class _LoginScreenState extends State<LoginScreen> {
                           borderRadius: BorderRadius.circular(20), // 둥글게
                         ),
                       ),
-                      child: const Text(
-                        "로그인",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: 'manru',
-                        ),
-                      ),
+                      child: _isLoading
+                          ? const CircularProgressIndicator(
+                              color: Colors.white) // 🛠 [추가] 로딩 중엔 인디케이터 표시
+                          : const Text(
+                              "로그인",
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'manru',
+                              ),
+                            ),
                     ),
                   ),
 
