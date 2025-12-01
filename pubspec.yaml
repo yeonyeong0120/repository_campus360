@@ -19,11 +19,12 @@ dependencies:
   provider: ^6.1.5+1
   table_calendar: ^3.2.0
   intl: ^0.20.2
-  webview_flutter: ^4.2.0
+  webview_flutter: ^4.2.0  # 360도 뷰어 WebGL 연동을 위한 웹뷰 패키지
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_launcher_icons: ^0.13.1
   url_launcher: ^6.2.1
   flutter_lints: ^6.0.0
 
@@ -34,8 +35,44 @@ flutter:
     - assets/images/
     - assets/images/maps/
 
-  # 폰트 설정
-  fonts:
-    - family: manru  # 이제부터 이 이름을 코드에서 씁니다
-      fonts:
-        - asset: assets/fonts/esamanru Light.ttf
+  # To add assets to your application, add an assets section, like this:
+  # assets:
+  #   - images/a_dot_burr.jpeg
+  #   - images/a_dot_ham.jpeg
+
+  # An image asset can refer to one or more resolution-specific "variants", see
+  # https://flutter.dev/to/resolution-aware-images
+
+  # For details regarding adding assets from package dependencies, see
+  # https://flutter.dev/to/asset-from-package
+
+  # To add custom fonts to your application, add a fonts section here,
+  # in this "flutter" section. Each entry in this list should have a
+  # "family" key with the font family name, and a "fonts" key with a
+  # list giving the asset and other descriptors for the font.
+  # For example:
+  # fonts:
+  #   - family: Schyler
+  #     fonts:
+  #       - asset: fonts/Schyler-Regular.ttf
+  #       - asset: fonts/Schyler-Italic.ttf
+  #         style: italic
+  #   - family: Trajan Pro
+  #     fonts:
+  #       - asset: fonts/TrajanPro.ttf
+  #       - asset: fonts/TrajanPro_Bold.ttf
+  #         weight: 700
+  #
+  # For details regarding fonts from package dependencies,
+  # see https://flutter.dev/to/font-from-package
+
+# 앱 아이콘
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  #image_path: "assets/images/logo.png"
+  image_path: "assets/images/logo_1024.png" # iOS용
+  adaptive_icon_background: "#FFFFFF"  # 배경색
+  adaptive_icon_foreground: "assets/images/logo_1024.png" # 튜명배경해야함
+  
+  min_sdk_android: 21
