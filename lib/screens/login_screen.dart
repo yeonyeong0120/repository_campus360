@@ -119,7 +119,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     width: 200,
                     height: 200,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.1),
+                      color: Colors.white.withValues(alpha: .1),
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -258,7 +258,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         backgroundColor: const Color(0xFF2196F3), // 브랜드 컬러
                         foregroundColor: Colors.white,
                         elevation: 8, // 그림자 진하게
-                        shadowColor: Colors.blueAccent.withOpacity(0.4),
+                        shadowColor: Colors.blueAccent.withValues(alpha: .4),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20), // 둥글게
                         ),
