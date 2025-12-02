@@ -355,6 +355,31 @@ class _LoginScreenState extends State<LoginScreen> {
                     ],
                   ),
 
+                  // 🔥 [추가] Admin 버튼
+                  const SizedBox(height: 16),
+
+                  Center(
+                    child: TextButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const AdminScreen()),
+                        );
+                      },
+                      icon: const Icon(Icons.admin_panel_settings,
+                          size: 18, color: Colors.grey),
+                      label: const Text(
+                        "관리자 페이지",
+                        style: TextStyle(
+                          color: Colors.grey,
+                          fontSize: 14,
+                          fontFamily: 'manru',
+                        ),
+                      ),
+                    ),
+                  ),
+
                   const SizedBox(height: 40), // 하단 여백 확보
                 ],
               ),

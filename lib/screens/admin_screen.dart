@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart'; // DB 접근
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
 import 'login_screen.dart';
+import '../utils/firebase_seed.dart';
 
 class AdminScreen extends StatelessWidget {
   const AdminScreen({super.key});
@@ -12,7 +13,7 @@ class AdminScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     // 1. 탭 컨트롤러 설정  // 일단 탭 개수 2개
     return DefaultTabController(
-      length: 2, 
+      length: 2,
       child: Scaffold(
         appBar: AppBar(
           title: const Text("관리자 페이지"),
@@ -43,10 +44,134 @@ class AdminScreen extends StatelessWidget {
           ),
         ),
         // 탭 내용 (순서대로 배치)
-        body: const TabBarView(  // 여기서 바뀜
+        body: Column(
           children: [
-            _ReservationApprovalList(), // 첫 번째 탭: 예약 관리
-            _RepairRequestList(),       // 두 번째 탭: 수리 관리
+            // 🔥 공간 데이터 관리 버튼 섹션
+            Container(
+              color: Colors.grey[100],
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "🗄️ 공간 데이터 관리",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () async {
+                            try {
+                              await seedSpacesData();
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('✅ 37개 공간 데이터 추가 완료!'),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
+                              }
+                            } catch (e) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('❌ 오류: $e'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                          icon: const Icon(Icons.upload, size: 18),
+                          label: const Text('공간 데이터 추가'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blue,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () async {
+                            final confirm = await showDialog<bool>(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: const Text('⚠️ 경고'),
+                                content: const Text(
+                                    '모든 공간 데이터가 삭제됩니다.\n정말 계속하시겠습니까?'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.pop(context, false),
+                                    child: const Text('취소'),
+                                  ),
+                                  ElevatedButton(
+                                    onPressed: () =>
+                                        Navigator.pop(context, true),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.red,
+                                    ),
+                                    child: const Text('삭제'),
+                                  ),
+                                ],
+                              ),
+                            );
+
+                            if (confirm == true && context.mounted) {
+                              try {
+                                await deleteAllSpaces();
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('🗑️ 데이터 삭제 완료!'),
+                                      backgroundColor: Colors.orange,
+                                    ),
+                                  );
+                                }
+                              } catch (e) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('❌ 오류: $e'),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
+                              }
+                            }
+                          },
+                          icon: const Icon(Icons.delete_forever, size: 18),
+                          label: const Text('전체 삭제'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            // 탭 내용 (Expanded로 감싸서 남은 공간 채우기)
+            const Expanded(
+              child: TabBarView(
+                // 여기서 바뀜
+                children: [
+                  _ReservationApprovalList(), // 첫 번째 탭: 예약 관리
+                  _RepairRequestList(), // 두 번째 탭: 수리 관리
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -74,11 +199,12 @@ class _ReservationApprovalList extends StatelessWidget {
       // 'pending'(대기중)인 예약만 가져오기
       stream: FirebaseFirestore.instance
           .collection('reservations')
-          .where('status', isEqualTo: 'pending') 
+          .where('status', isEqualTo: 'pending')
           .orderBy('createdAt', descending: true) // 최신순 정렬
           .snapshots(),
       builder: (context, snapshot) {
-        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+        if (!snapshot.hasData)
+          return const Center(child: CircularProgressIndicator());
         if (snapshot.data!.docs.isEmpty) {
           return const Center(child: Text("승인 대기 중인 예약이 없습니다."));
         }
@@ -103,30 +229,38 @@ class _ReservationApprovalList extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(data['spaceName'] ?? '공간명 없음', 
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                        Chip(label: Text(data['userName'] ?? '사용자'), backgroundColor: Colors.blue[50]),
+                        Text(data['spaceName'] ?? '공간명 없음',
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 16)),
+                        Chip(
+                            label: Text(data['userName'] ?? '사용자'),
+                            backgroundColor: Colors.blue[50]),
                       ],
                     ),
                     const SizedBox(height: 8),
                     Text("📅 날짜: ${data['date']}"),
                     Text("⏰ 시간: ${data['timeSlot']}"),
-                    
+
                     const Divider(height: 24),
-                    
+
                     // 승인 / 거절 버튼
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         OutlinedButton(
-                          onPressed: () => _updateStatus(docId, 'cancelled'), // 거절 -> 취소 처리
-                          style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
+                          onPressed: () =>
+                              _updateStatus(docId, 'cancelled'), // 거절 -> 취소 처리
+                          style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.red),
                           child: const Text("거절"),
                         ),
                         const SizedBox(width: 12),
                         ElevatedButton(
-                          onPressed: () => _updateStatus(docId, 'confirmed'), // 승인 -> 확정 처리
-                          style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
+                          onPressed: () =>
+                              _updateStatus(docId, 'confirmed'), // 승인 -> 확정 처리
+                          style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green,
+                              foregroundColor: Colors.white),
                           child: const Text("승인"),
                         ),
                       ],
@@ -166,7 +300,8 @@ class _RepairRequestList extends StatelessWidget {
           .orderBy('requestedAt', descending: true)
           .snapshots(),
       builder: (context, snapshot) {
-        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+        if (!snapshot.hasData)
+          return const Center(child: CircularProgressIndicator());
         if (snapshot.data!.docs.isEmpty) {
           return const Center(child: Text("접수된 수리 요청이 없습니다."));
         }
@@ -189,12 +324,15 @@ class _RepairRequestList extends StatelessWidget {
                   children: [
                     Text("신고자: ${data['userName']}"),
                     const SizedBox(height: 4),
-                    Text(data['description'] ?? '', style: const TextStyle(color: Colors.black87)),
+                    Text(data['description'] ?? '',
+                        style: const TextStyle(color: Colors.black87)),
                   ],
                 ),
                 trailing: ElevatedButton(
                   onPressed: () => _completeRepair(docId),
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.indigo, foregroundColor: Colors.white),
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.indigo,
+                      foregroundColor: Colors.white),
                   child: const Text("처리 완료"),
                 ),
               ),
