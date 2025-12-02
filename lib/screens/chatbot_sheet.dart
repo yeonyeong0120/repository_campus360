@@ -111,10 +111,8 @@ class _ChatbotSheetState extends State<ChatbotSheet> {
 
                       // 👉 사용자 선택지 (답변이 아직 없을 때만 보임)
                       if (_selectedAnswer == null)
-                        Wrap(
-                          spacing: 10,
-                          runSpacing: 10,
-                          alignment: WrapAlignment.end, // 오른쪽 정렬
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
                           children: branches.map((branch) {
                             return ActionChip(
                               label: Text(branch['label'] ?? '버튼'),
