@@ -134,7 +134,7 @@ class _MyHistoryScreenState extends State<MyHistoryScreen>
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withValues(alpha: .05),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -222,7 +222,7 @@ class _MyHistoryScreenState extends State<MyHistoryScreen>
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: .05),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -306,7 +306,7 @@ class _MyHistoryScreenState extends State<MyHistoryScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: .1),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(

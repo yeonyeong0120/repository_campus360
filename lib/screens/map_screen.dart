@@ -124,7 +124,7 @@ class _MapScreenState extends State<MapScreen> {
                 borderRadius: BorderRadius.circular(10),
                 boxShadow: [
                   BoxShadow(
-                      color: Colors.black.withOpacity(.2), // opacity를 직접 설정
+                      color: Colors.black.withValues(alpha: 0.2), // opacity를 직접 설정
                       blurRadius: 4,
                       offset: const Offset(0, 2))
                 ],
