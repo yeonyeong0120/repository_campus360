@@ -21,7 +21,7 @@ class _ChatbotSheetState extends State<ChatbotSheet> {
   bool _isLoading = false;
 
   late final GenerativeModel _model;
-  final String _apiKey = 'AIzaSyBNGBbI0MPi6oc3xvPJJmxuk3IztsJVH50'; 
+  final String _apiKey = 'AIzaSyBkJMsI8edhPYP3_jowbvJwlZxrLDT7u2o'; 
 
   @override
   void initState() {
@@ -95,15 +95,15 @@ class _ChatbotSheetState extends State<ChatbotSheet> {
         children: [
           // 1. 헤더
           Padding(
-            padding: const EdgeInsets.all(15),
+            padding: const EdgeInsets.fromLTRB(15, 50, 15, 15),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Row(
                   children: [
-                    Icon(Icons.auto_awesome, color: Colors.blue),
-                    SizedBox(width: 8),
-                    Text("캠퍼스 톡 (AI)", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    Icon(Icons.auto_awesome, color: Colors.blue, size: 28,),
+                    SizedBox(width: 10),
+                    Text("캠퍼스 톡 AI", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
                   ],
                 ),
                 IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
@@ -130,7 +130,10 @@ class _ChatbotSheetState extends State<ChatbotSheet> {
                       color: isUser ? Colors.blue[100] : Colors.grey[200],
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Text(chat['text']!, style: const TextStyle(fontSize: 15)),
+                    child: Text(
+                      chat['text']!.replaceAll('**', ''),
+                      style: const TextStyle(fontSize: 15)
+                      ),
                   ),
                 );
               },
@@ -146,7 +149,7 @@ class _ChatbotSheetState extends State<ChatbotSheet> {
 
           // 4. 추천 버튼 (Firestore 'start' 문서에서 가져오기)
           SizedBox(
-            height: 50,
+            height: 60,
             child: StreamBuilder<DocumentSnapshot>(
               stream: FirebaseFirestore.instance.collection('chatbot_qna').doc('start').snapshots(),
               builder: (context, snapshot) {
@@ -162,13 +165,29 @@ class _ChatbotSheetState extends State<ChatbotSheet> {
                   separatorBuilder: (_, __) => const SizedBox(width: 8),
                   itemBuilder: (context, index) {
                     final btn = branches[index];
-                    return ActionChip(
-                      label: Text(btn['label'] ?? '질문'),
-                      backgroundColor: Colors.blue[50],
-                      onPressed: () {
-                        // 버튼을 누르면 그 텍스트 그대로 AI에게 질문!
-                        _sendMessage(text: btn['label'] ?? '질문');
-                      },
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2), // 그림자 잘리지 않게 여백
+                      child: ElevatedButton(
+                        onPressed: () => _sendMessage(text: btn['label'] ?? '질문'),
+                        style: ElevatedButton.styleFrom(
+                          minimumSize: const Size(0, 45),
+                          backgroundColor: const Color.fromARGB(111, 255, 255, 255),
+                          elevation: 2, // 그림자 높이
+                          shadowColor: Colors.black26,
+                          side: BorderSide(color: Colors.grey[300]!, width: 1.0),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12), // 약간 둥근 사각형
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                        ),
+                        child: Text(
+                          btn['label'] ?? '질문',
+                          style: const TextStyle(
+                            color: Colors.black87,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
                     );
                   },
                 );
@@ -186,9 +205,9 @@ class _ChatbotSheetState extends State<ChatbotSheet> {
                   child: TextField(
                     controller: _textController,
                     decoration: const InputDecoration(
-                      hintText: "궁금한 점을 물어보세요...",
+                      hintText: "궁금한 점을 물어보세요! 🤗",
                       border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(horizontal: 10),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 17),
                     ),
                     onSubmitted: (_) => _sendMessage(),
                   ),
