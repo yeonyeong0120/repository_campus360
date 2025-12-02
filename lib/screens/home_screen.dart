@@ -2,9 +2,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:repository_campus360/screens/chatbot_sheet.dart';
 // import 'package:intl/intl.dart'; // 사용되지 않아 제거됨
 import '../providers/user_provider.dart';
+import 'login_screen.dart';
 // 🌟 [최종 수정] 상대 경로 대신 절대 경로(Package Path)로 강제 지정
 import 'package:repository_campus360/screens/reservation_detail_screen.dart';
 import 'reservation_screen.dart';
@@ -79,7 +79,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       width: 200,
                       height: 200,
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: .1),
+                        color: Colors.white.withOpacity(0.1),
                         shape: BoxShape.circle,
                       ),
                     ),
@@ -118,7 +118,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                               Container(
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: .2),
+                                  color: Colors.white.withOpacity(0.2),
                                   shape: BoxShape.circle,
                                 ),
                                 child: IconButton(
@@ -153,10 +153,10 @@ class _HomeScreenState extends State<HomeScreen> {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 16, vertical: 8),
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: .2),
+                              color: Colors.white.withOpacity(0.2),
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
-                                  color: Colors.white.withValues(alpha: .3)),
+                                  color: Colors.white.withOpacity(0.3)),
                             ),
                             child: Text(
                               userModel?.department ?? "소속 없음",
@@ -204,7 +204,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: .03),
+                              color: Colors.black.withOpacity(0.03),
                               blurRadius: 15,
                               offset: const Offset(0, 5),
                             ),
@@ -396,7 +396,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       Expanded(
                         child: ListView(
                           padding: EdgeInsets.zero,
-                          physics: const BouncingScrollPhysics(), // 내부 스크롤만 허용
+                          // 🌟 [수정] 스크롤 없애기 (NeverScrollableScrollPhysics 적용)
+                          physics: const NeverScrollableScrollPhysics(),
                           children: [
                             ...spaces.map((space) => _buildSpaceCard(space)),
                             const SizedBox(height: 80),
@@ -413,14 +414,7 @@ class _HomeScreenState extends State<HomeScreen> {
             bottom: 16,
             right: 16,
             child: FloatingActionButton(
-              onPressed: () {
-                showModalBottomSheet(
-                  context: context,
-                  isScrollControlled: true, // 전체 화면 높이 사용 가능하게
-                  backgroundColor: Colors.transparent, // 배경 투명 (둥근 모서리 위해)
-                  builder: (context) => const ChatbotSheet()
-                );
-              },
+              onPressed: () {},
               backgroundColor: const Color(0xFF2196F3),
               child:
                   const Icon(Icons.question_mark_rounded, color: Colors.white),
@@ -439,7 +433,7 @@ class _HomeScreenState extends State<HomeScreen> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: .04),
+            color: Colors.black.withOpacity(0.04),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
