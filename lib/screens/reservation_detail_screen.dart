@@ -108,7 +108,7 @@ class ReservationDetailScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(24), // 둥글게
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
+                            color: Colors.black.withValues(alpha: .05),
                             blurRadius: 20,
                             offset: const Offset(0, 10),
                           ),
@@ -178,7 +178,7 @@ class ReservationDetailScreen extends StatelessWidget {
                                       decoration: BoxDecoration(
                                         color: getStatusColor(
                                                 reservation['status'])
-                                            .withOpacity(0.1),
+                                            .withValues(alpha: .1),
                                         borderRadius: BorderRadius.circular(20),
                                       ),
                                       child: Text(
@@ -228,7 +228,7 @@ class ReservationDetailScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.03),
+                            color: Colors.black.withValues(alpha: .03),
                             blurRadius: 15,
                             offset: const Offset(0, 5),
                           ),
@@ -366,7 +366,7 @@ class ReservationDetailScreen extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: iconColor.withOpacity(0.1),
+            color: iconColor.withValues(alpha: .1),
             shape: BoxShape.circle,
           ),
           child: Icon(icon, color: iconColor, size: 20),

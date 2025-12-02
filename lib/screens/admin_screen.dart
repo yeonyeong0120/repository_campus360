@@ -203,8 +203,9 @@ class _ReservationApprovalList extends StatelessWidget {
           .orderBy('createdAt', descending: true) // 최신순 정렬
           .snapshots(),
       builder: (context, snapshot) {
-        if (!snapshot.hasData)
+        if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
+        }
         if (snapshot.data!.docs.isEmpty) {
           return const Center(child: Text("승인 대기 중인 예약이 없습니다."));
         }
@@ -300,8 +301,9 @@ class _RepairRequestList extends StatelessWidget {
           .orderBy('requestedAt', descending: true)
           .snapshots(),
       builder: (context, snapshot) {
-        if (!snapshot.hasData)
+        if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
+        }
         if (snapshot.data!.docs.isEmpty) {
           return const Center(child: Text("접수된 수리 요청이 없습니다."));
         }
