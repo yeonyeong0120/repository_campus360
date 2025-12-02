@@ -4,7 +4,6 @@ import 'package:cloud_firestore/cloud_firestore.dart'; // DB 접근
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
 import 'login_screen.dart';
-import '../utils/firebase_seed.dart';
 
 class AdminScreen extends StatelessWidget {
   const AdminScreen({super.key});
@@ -45,122 +44,7 @@ class AdminScreen extends StatelessWidget {
         ),
         // 탭 내용 (순서대로 배치)
         body: Column(
-          children: [
-            // 🔥 공간 데이터 관리 버튼 섹션
-            Container(
-              color: Colors.grey[100],
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "🗄️ 공간 데이터 관리",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () async {
-                            try {
-                              await seedSpacesData();
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('✅ 37개 공간 데이터 추가 완료!'),
-                                    backgroundColor: Colors.green,
-                                  ),
-                                );
-                              }
-                            } catch (e) {
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('❌ 오류: $e'),
-                                    backgroundColor: Colors.red,
-                                  ),
-                                );
-                              }
-                            }
-                          },
-                          icon: const Icon(Icons.upload, size: 18),
-                          label: const Text('공간 데이터 추가'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () async {
-                            final confirm = await showDialog<bool>(
-                              context: context,
-                              builder: (context) => AlertDialog(
-                                title: const Text('⚠️ 경고'),
-                                content: const Text(
-                                    '모든 공간 데이터가 삭제됩니다.\n정말 계속하시겠습니까?'),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () =>
-                                        Navigator.pop(context, false),
-                                    child: const Text('취소'),
-                                  ),
-                                  ElevatedButton(
-                                    onPressed: () =>
-                                        Navigator.pop(context, true),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.red,
-                                    ),
-                                    child: const Text('삭제'),
-                                  ),
-                                ],
-                              ),
-                            );
-
-                            if (confirm == true && context.mounted) {
-                              try {
-                                await deleteAllSpaces();
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('🗑️ 데이터 삭제 완료!'),
-                                      backgroundColor: Colors.orange,
-                                    ),
-                                  );
-                                }
-                              } catch (e) {
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text('❌ 오류: $e'),
-                                      backgroundColor: Colors.red,
-                                    ),
-                                  );
-                                }
-                              }
-                            }
-                          },
-                          icon: const Icon(Icons.delete_forever, size: 18),
-                          label: const Text('전체 삭제'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
+          children: [            
 
             // 탭 내용 (Expanded로 감싸서 남은 공간 채우기)
             const Expanded(

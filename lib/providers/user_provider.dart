@@ -33,6 +33,7 @@ class UserProvider with ChangeNotifier {
         setUser(userModel);
       }
     } catch (e) {
+      // ignore: avoid_print
       print('사용자 정보 로드 오류: $e');
     }
   }
