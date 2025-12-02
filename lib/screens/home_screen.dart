@@ -220,7 +220,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       showModalBottomSheet(
                         context: context,
                         isScrollControlled: true, // 화면 높이 자유롭게
-                        backgroundColor: Colors.transparent, // 배경 투명 (모서리 둥글게 하려고)
+                        backgroundColor:
+                            Colors.transparent, // 배경 투명 (모서리 둥글게 하려고)
                         builder: (context) => const ChatbotSheet(),
                       );
                     },
@@ -263,7 +264,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   },
                 ),
                 Positioned(
-                  bottom: 10,
+                  bottom: 15,
                   left: 24,
                   child: Row(
                     children: List.generate(
@@ -479,7 +480,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               Positioned(
-                bottom: 26,
+                bottom: 35,
                 left: 24,
                 right: 24,
                 child: Column(
