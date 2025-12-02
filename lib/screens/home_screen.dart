@@ -5,7 +5,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:repository_campus360/screens/chatbot_sheet.dart';
 // import 'package:intl/intl.dart'; // 사용되지 않아 제거됨
 import '../providers/user_provider.dart';
-import 'login_screen.dart';
 // 🌟 [최종 수정] 상대 경로 대신 절대 경로(Package Path)로 강제 지정
 import 'package:repository_campus360/screens/reservation_detail_screen.dart';
 import 'reservation_screen.dart';
