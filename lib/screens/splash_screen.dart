@@ -135,7 +135,7 @@ class _SplashScreenState extends State<SplashScreen> {
     await Future.delayed(const Duration(seconds: 2));
 
     // [테스트용] 앱 켤 때마다 강제 로그아웃 (나중에 주석 처리 하세요!)
-    // await FirebaseAuth.instance.signOut();
+    await FirebaseAuth.instance.signOut();
 
     // 로그인 사용자 확인
     final user = FirebaseAuth.instance.currentUser;
