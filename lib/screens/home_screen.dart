@@ -2,12 +2,13 @@
 
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:repository_campus360/screens/chatbot_sheet.dart';
 
 // 🌟 [경로 유지]
 import 'detail_screen.dart'; // 🌟 상세 페이지 (탭 포함)
 import 'my_history_screen.dart';
 import 'map_screen.dart';
-// import 'chatbot_screen.dart';
+import '../widgets/common_image.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -195,6 +196,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               const SizedBox(width: 12),
+              // 챗봇
               Container(
                 width: 56,
                 height: 56,
@@ -214,7 +216,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   color: Colors.transparent,
                   child: InkWell(
                     borderRadius: BorderRadius.circular(100),
-                    onTap: () {},
+                    onTap: () {
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true, // 화면 높이 자유롭게
+                        backgroundColor: Colors.transparent, // 배경 투명 (모서리 둥글게 하려고)
+                        builder: (context) => const ChatbotSheet(),
+                      );
+                    },
                     child: Center(
                       child: Padding(
                         padding: const EdgeInsets.all(12.0),
@@ -449,9 +458,13 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              space['image'] != null
-                  ? Image.asset(space['image'], fit: BoxFit.cover)
-                  : Container(color: Colors.grey[300]),
+              // space['image'] != null
+              //     ? Image.asset(space['image'], fit: BoxFit.cover)
+              //     : Container(color: Colors.grey[300]),
+              CommonImage(
+                space['image'], // 이미지 경로 전달
+                fit: BoxFit.cover, // 화면 꽉 채우기
+              ),
               Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
