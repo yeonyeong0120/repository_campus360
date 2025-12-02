@@ -24,7 +24,7 @@ class _SplashScreenState extends State<SplashScreen> {
     // lib/screens/splash_screen.dart 파일 내부 (initState 위에 새 함수 추가)
 
 // 📌 [주의] 이 함수를 실행한 후에는 반드시 다시 주석 처리하거나 지워야 합니다.
-    Future<void> _uploadInitialData() async {
+    Future<void> uploadInitialData() async {
       final batch = FirebaseFirestore.instance.batch();
       final spacesCollection = FirebaseFirestore.instance.collection('spaces');
 

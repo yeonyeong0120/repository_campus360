@@ -294,7 +294,7 @@ class _MapScreenState extends State<MapScreen> {
                                 initialQuery: recommendedRoom))); // 이동!
                   },
                 );
-              }).toList(),
+              }),
 
               const SizedBox(height: 20),
 
