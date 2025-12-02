@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:repository_campus360/screens/chatbot_sheet.dart';
 // import 'package:intl/intl.dart'; // 사용되지 않아 제거됨
 import '../providers/user_provider.dart';
 import 'login_screen.dart';
@@ -414,7 +415,14 @@ class _HomeScreenState extends State<HomeScreen> {
             bottom: 16,
             right: 16,
             child: FloatingActionButton(
-              onPressed: () {},
+              onPressed: () {
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true, // 전체 화면 높이 사용 가능하게
+                  backgroundColor: Colors.transparent, // 배경 투명 (둥근 모서리 위해)
+                  builder: (context) => const ChatbotSheet(),
+                );
+              },
               backgroundColor: const Color(0xFF2196F3),
               child:
                   const Icon(Icons.question_mark_rounded, color: Colors.white),
