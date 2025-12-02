@@ -128,7 +128,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 // 파란색 그라데이션 배경
                 Container(
                   // 🎨 로고가 커졌으므로 헤더 높이도 40% -> 45%로 살짝 늘려줌 (답답하지 않게)
-                  height: size.height * 0.40,
+                  height: size.height * 0.45,
                   decoration: const BoxDecoration(
                     gradient: LinearGradient(
                       colors: [Color(0xFF2196F3), Color(0xFF64B5F6)], // 브랜드 컬러
@@ -162,10 +162,11 @@ class _LoginScreenState extends State<LoginScreen> {
                     children: [
                       // 🌟 [유저 설정 유지] 3D 캐릭터 이미지 크기
                       Container(
+                        margin: const EdgeInsets.only(top: 20),
                         child: Image.asset(
                           'assets/images/logo_3d.png',
-                          width: 260, // 설정하신 값 유지
-                          height: 260, // 설정하신 값 유지
+                          width: 230, // 이미지 크기
+                          height: 230,
                           // 만약 이미지가 없으면 아이콘 대체
                           errorBuilder: (context, error, stackTrace) {
                             return const Icon(Icons.calendar_month,
@@ -176,13 +177,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
                       // 이미지의 투명 여백 때문에 멀어 보이는 것을 해결하기 위해 Transform.translate 사용
                       Transform.translate(
-                        offset: const Offset(0, -28), // 설정하신 값 유지
+                        offset: const Offset(0, -15), // 오프셋 조정
                         child: Column(
                           children: [
                             const Text(
                               "Smart Campus 360",
                               style: TextStyle(
-                                fontSize: 33, // 설정하신 값 유지
+                                fontSize: 28, // 설정하신 값 유지
                                 fontWeight: FontWeight.w900,
                                 color: Colors.white,
                                 fontFamily: 'manru',
@@ -190,13 +191,12 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ),
 
-                            // 🛠 [수정] 중복된 SizedBox 제거하고 하나만 남김
                             const SizedBox(height: 5),
 
                             const Text(
                               "스마트한 대학 생활의 시작",
                               style: TextStyle(
-                                fontSize: 20, // 설정하신 값 유지
+                                fontSize: 18, // 설정하신 값 유지
                                 color: Colors.white70, // 살짝 투명하게
                                 fontFamily: 'manru',
                                 fontWeight: FontWeight.w500,
