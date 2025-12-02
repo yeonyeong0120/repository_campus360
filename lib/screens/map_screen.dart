@@ -3,6 +3,7 @@ import 'dart:async'; // Completer
 import 'package:google_maps_flutter/google_maps_flutter.dart'; // 구글맵 패키지
 import 'package:flutter/material.dart';
 import 'package:repository_campus360/consts/building_data.dart';
+import 'package:repository_campus360/consts/campus_markers.dart';
 import 'search_screen.dart'; // 검색결과랑 연결
 import 'detail_screen.dart'; // 🌟 [필수] 상세 화면 연결
 
@@ -19,7 +20,7 @@ class _MapScreenState extends State<MapScreen> {
 
   // 🏫 학교 중심 좌표 (한국폴리텍대학 인천캠퍼스 본관 근처)
   static const CameraPosition _kSchoolCenter = CameraPosition(
-    target: LatLng(37.478871, 126.753714), // 학교 중심 위도, 경도
+    target: LatLng(37.478624, 126.754742),
     zoom: 17.5, // 줌 레벨 (숫자가 클수록 확대)
   );
 
@@ -37,46 +38,32 @@ class _MapScreenState extends State<MapScreen> {
 
   // 📍 마커 생성 함수 (좌표는 구글맵에서 찍어서 확인 필요!)
   void _createMarkers() {
+    // 1. 일반 건물 마커들 (campusMarkerData 리스트를 반복해서 마커로 변환)
+    final buildingMarkers = campusMarkerData.map((info) {
+
+      final bool isGreen = ['학교 정문', '폴90도 (카페)'].contains(info.title);
+      final bool isNonClickable = [
+        '학교 정문', 
+        '폴90도 (카페)', 
+        '역사관'
+      ].contains(info.title);
+
+      return Marker(
+        markerId: MarkerId(info.id),
+        position: info.position,
+        infoWindow: InfoWindow(title: info.title),
+        icon: isGreen 
+            ? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen) 
+            : BitmapDescriptor.defaultMarker,
+            
+        // 🚫 조건에 따라 클릭 이벤트 끄기 (null이면 아무 동작 안 함)
+        onTap: isNonClickable ? null : () => _showBuildingDetail(info.title),
+      );
+    }).toSet();
+
     setState(() {
-      _markers = {
-        // 1. 하이테크관 마커
-        Marker(
-          markerId: const MarkerId('hitech'),
-          position: const LatLng(37.476920, 126.755066),
-          infoWindow: const InfoWindow(title: '하이테크관'),
-          onTap: () => _showBuildingDetail('하이테크관'),
-        ),
-        // 2. 5기술관 마커
-        Marker(
-          markerId: const MarkerId('tech5'),
-          position: const LatLng(37.480033, 126.755020),
-          infoWindow: const InfoWindow(title: '5기술관'),
-          onTap: () => _showBuildingDetail('5기술관'),
-        ),
-        // 3. 대학 본관 마커
-        Marker(
-          markerId: const MarkerId('main_hall'),
-          position: const LatLng(37.478398, 126.755721),
-          infoWindow: const InfoWindow(title: '대학 본관'),
-          onTap: () => _showBuildingDetail('대학 본관'),
-        ),
-        // 정문
-        Marker(
-          markerId: const MarkerId('main_gate'),
-          position: _kSchoolCenter.target, 
-          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
-          infoWindow: const InfoWindow(title: '정문 (Main Gate)'),
-          onTap: () {
-             // 여기에 아무것도 안 적으면 클릭해도 이동 안 함!
-          },
-        ),
-
-
-
-
-        
-        // ... 다른 건물 마커도 이렇게 추가 ...
-      };
+      // 두 세트를 합친거 대입
+      _markers = buildingMarkers;
     });
   }
 
@@ -122,7 +109,7 @@ class _MapScreenState extends State<MapScreen> {
               backgroundColor: Colors.white,
               foregroundColor: Colors.blue,
               onPressed: _goToSchoolCenter,
-              child: const Icon(Icons.school),
+              child: const Icon(Icons.center_focus_strong, size: 30,),
             ),
           ),
         ],
@@ -157,14 +144,21 @@ class _MapScreenState extends State<MapScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(buildingName, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-                  IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
+                  Text(buildingName,
+                      style: const TextStyle(
+                          fontSize: 22, fontWeight: FontWeight.bold)),
+                  IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context)),
                 ],
               ),
               const Divider(),
               const SizedBox(height: 10),
-              const Text("추천 강의실", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey)),
-              
+              const Text("추천 강의실",
+                  style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey)),
               if (floors.isEmpty)
                 const Padding(
                   padding: EdgeInsets.all(20),
@@ -180,10 +174,15 @@ class _MapScreenState extends State<MapScreen> {
                     contentPadding: EdgeInsets.zero,
                     leading: CircleAvatar(
                       backgroundColor: Colors.blue[50],
-                      child: Text(floor, style: const TextStyle(fontSize: 12, color: Colors.blue, fontWeight: FontWeight.bold)),
+                      child: Text(floor,
+                          style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.blue,
+                              fontWeight: FontWeight.bold)),
                     ),
                     title: Text("$recommendedRoom (추천)"),
-                    trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
+                    trailing: const Icon(Icons.arrow_forward_ios,
+                        size: 14, color: Colors.grey),
                     onTap: () {
                       Navigator.pop(context);
                       // 상세 페이지 이동 로직 (기존과 동일)
@@ -192,24 +191,29 @@ class _MapScreenState extends State<MapScreen> {
                         'location': '$buildingName $floor',
                         'capacity': '정보 없음',
                       };
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => DetailScreen(space: spaceData)));
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => DetailScreen(space: spaceData)));
                     },
                   );
                 }),
-
               const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
                     Navigator.pop(context);
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => SearchScreen(initialQuery: buildingName)));
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) =>
+                                SearchScreen(initialQuery: buildingName)));
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue, 
-                    foregroundColor: Colors.white, 
-                    padding: const EdgeInsets.symmetric(vertical: 15)
-                  ),
+                      backgroundColor: Colors.blue,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 15)),
                   child: Text("$buildingName 전체 공간 보기"),
                 ),
               ),
