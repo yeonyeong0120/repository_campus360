@@ -1,6 +1,5 @@
 // lib/screens/detail_screen.dart
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'reservation_screen.dart'; // 예약하기 버튼 누르면 여기로 이동
 import 'webview_screen.dart'; // 360도 뷰
 
