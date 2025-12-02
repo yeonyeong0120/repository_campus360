@@ -21,7 +21,7 @@ class _ChatbotSheetState extends State<ChatbotSheet> {
   bool _isLoading = false;
 
   late final GenerativeModel _model;
-  final String _apiKey = 'AIzaSyCR9N8bugWMjVZDWabz9r6qdN2HxrnraGg'; 
+  final String _apiKey = 'AIzaSyBNGBbI0MPi6oc3xvPJJmxuk3IztsJVH50'; 
 
   @override
   void initState() {
@@ -31,7 +31,7 @@ class _ChatbotSheetState extends State<ChatbotSheet> {
     
     // Gemini 설정
     _model = GenerativeModel(
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.5-flash',
       apiKey: _apiKey,
       systemInstruction: Content.system(schoolPrompt),
     );
@@ -163,11 +163,11 @@ class _ChatbotSheetState extends State<ChatbotSheet> {
                   itemBuilder: (context, index) {
                     final btn = branches[index];
                     return ActionChip(
-                      label: Text(btn['label']),
+                      label: Text(btn['label'] ?? '질문'),
                       backgroundColor: Colors.blue[50],
                       onPressed: () {
                         // 버튼을 누르면 그 텍스트 그대로 AI에게 질문!
-                        _sendMessage(text: btn['label']);
+                        _sendMessage(text: btn['label'] ?? '질문');
                       },
                     );
                   },
