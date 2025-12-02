@@ -154,11 +154,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Container(
                   height: 56,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF7BA4D2),
+                    color: const Color(0xFF4282CB),
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF7BA4D2).withValues(alpha: 0.3),
+                        color: const Color(0xFF4282CB).withValues(alpha: 0.3),
                         blurRadius: 8,
                         offset: const Offset(0, 4),
                       ),
@@ -237,7 +237,7 @@ class _HomeScreenState extends State<HomeScreen> {
           // 📸 1. 상단 이미지 슬라이더 (클릭 시 상세 탭으로 이동)
           // ---------------------------------------------------------
           Expanded(
-            flex: 9,
+            flex: 10,
             child: Stack(
               children: [
                 PageView.builder(
@@ -254,7 +254,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   },
                 ),
                 Positioned(
-                  bottom: 30,
+                  bottom: 10,
                   left: 24,
                   child: Row(
                     children: List.generate(
@@ -393,7 +393,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                               review['date']!,
                                               style: TextStyle(
                                                 color: Colors.grey[400],
-                                                fontSize: 11,
+                                                fontSize: 13,
                                               ),
                                             ),
                                           ],
@@ -466,7 +466,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               Positioned(
-                bottom: 50,
+                bottom: 26,
                 left: 24,
                 right: 24,
                 child: Column(
