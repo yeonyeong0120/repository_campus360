@@ -45,7 +45,7 @@ class DetailScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: .05),
                     blurRadius: 20,
                     offset: const Offset(0, 10),
                   ),
@@ -108,7 +108,7 @@ class DetailScreen extends StatelessWidget {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 12, vertical: 6),
                               decoration: BoxDecoration(
-                                color: Colors.blue.withOpacity(0.1),
+                                color: Colors.blue.withValues(alpha: .1),
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Text(
@@ -170,7 +170,7 @@ class DetailScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.03),
+                    color: Colors.black.withValues(alpha: .03),
                     blurRadius: 15,
                     offset: const Offset(0, 5),
                   ),
