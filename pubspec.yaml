@@ -20,7 +20,7 @@ dependencies:
   table_calendar: ^3.2.0
   intl: ^0.20.2
   webview_flutter: ^4.2.0  # 360도 뷰어 WebGL 연동을 위한 웹뷰 패키지
-  google_generative_ai: ^0.4.7
+  google_generative_ai: ^0.4.7  # 구버전이라 안된대... ^0.4.7  # 신버전 금지...
 
 dev_dependencies:
   flutter_test:
