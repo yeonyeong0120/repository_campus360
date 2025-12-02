@@ -2,6 +2,7 @@
 import 'dart:async'; // Completer
 import 'package:google_maps_flutter/google_maps_flutter.dart'; // 구글맵 패키지
 import 'package:flutter/material.dart';
+import 'package:repository_campus360/consts/building_data.dart';
 import 'search_screen.dart'; // 검색결과랑 연결
 import 'detail_screen.dart'; // 🌟 [필수] 상세 화면 연결
 
@@ -18,7 +19,7 @@ class _MapScreenState extends State<MapScreen> {
 
   // 🏫 학교 중심 좌표 (한국폴리텍대학 인천캠퍼스 본관 근처)
   static const CameraPosition _kSchoolCenter = CameraPosition(
-    target: LatLng(37.5096, 126.7219), // 학교 중심 위도, 경도
+    target: LatLng(37.478871, 126.753714), // 학교 중심 위도, 경도
     zoom: 17.5, // 줌 레벨 (숫자가 클수록 확대)
   );
 
@@ -27,25 +28,6 @@ class _MapScreenState extends State<MapScreen> {
 
   // 필터용 변수 (기존 유지)
   double _peopleCount = 10.0;
-
-  // 🌟 [데이터] 건물별 상세 정보 (기존 데이터 유지!)
-  final Map<String, List<Map<String, dynamic>>> buildingData = {
-    "하이테크관": [
-      {'floor': '3F', 'rooms': ['디지털데이터활용실습실', '강의실 2']},
-      {'floor': '2F', 'rooms': ['컨퍼런스룸']},
-    ],
-    "1기술관": [
-      {'floor': '2F', 'rooms': ['CAD실습실', '콘트롤러실습실']},
-    ],
-    "5기술관": [
-      {'floor': '3F', 'rooms': ['반도체제어실', '전자CAD실']},
-      {'floor': '1F', 'rooms': ['개인미디어실', '세미나실']},
-    ],
-    "대학 본관": [
-      {'floor': '1F', 'rooms': ['행정실', '학생식당']},
-    ],
-    // ... 나머지 건물 데이터도 여기에 추가 ...
-  };
 
   @override
   void initState() {
@@ -60,24 +42,39 @@ class _MapScreenState extends State<MapScreen> {
         // 1. 하이테크관 마커
         Marker(
           markerId: const MarkerId('hitech'),
-          position: const LatLng(37.5093, 126.7225), // 📍 실제 좌표로 수정 필요
+          position: const LatLng(37.476920, 126.755066),
           infoWindow: const InfoWindow(title: '하이테크관'),
           onTap: () => _showBuildingDetail('하이테크관'),
         ),
         // 2. 5기술관 마커
         Marker(
           markerId: const MarkerId('tech5'),
-          position: const LatLng(37.5088, 126.7215), // 📍 실제 좌표로 수정 필요
+          position: const LatLng(37.480033, 126.755020),
           infoWindow: const InfoWindow(title: '5기술관'),
           onTap: () => _showBuildingDetail('5기술관'),
         ),
         // 3. 대학 본관 마커
         Marker(
           markerId: const MarkerId('main_hall'),
-          position: const LatLng(37.5100, 126.7218), // 📍 실제 좌표로 수정 필요
+          position: const LatLng(37.478398, 126.755721),
           infoWindow: const InfoWindow(title: '대학 본관'),
           onTap: () => _showBuildingDetail('대학 본관'),
         ),
+        // 정문
+        Marker(
+          markerId: const MarkerId('main_gate'),
+          position: _kSchoolCenter.target, 
+          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+          infoWindow: const InfoWindow(title: '정문 (Main Gate)'),
+          onTap: () {
+             // 여기에 아무것도 안 적으면 클릭해도 이동 안 함!
+          },
+        ),
+
+
+
+
+        
         // ... 다른 건물 마커도 이렇게 추가 ...
       };
     });
