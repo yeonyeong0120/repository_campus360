@@ -236,17 +236,28 @@ class _LoginScreenState extends State<LoginScreen> {
                       color: Colors.grey[100],
                       borderRadius: BorderRadius.circular(16), // 더 둥글게
                     ),
-                    child: TextField(
-                      controller: _emailController,
-                      style: const TextStyle(fontFamily: 'manru'),
-                      decoration: const InputDecoration(
-                        prefixIcon:
-                            Icon(Icons.email_outlined, color: Colors.grey),
-                        hintText: "이메일",
-                        hintStyle:
-                            TextStyle(color: Colors.grey, fontFamily: 'manru'),
-                        border: InputBorder.none, // 테두리 없애기
-                        contentPadding: EdgeInsets.symmetric(vertical: 16),
+                    // 🌟 [핵심] Theme으로 감싸서 내부의 기본 폰트를 시스템 폰트로 초기화
+                    child: Theme(
+                      data: ThemeData(
+                        colorScheme: Theme.of(context).colorScheme,
+                        useMaterial3: true,
+                        // fontFamily를 지정하지 않음 -> 시스템 기본 폰트 사용
+                      ),
+                      child: TextField(
+                        controller: _emailController,
+                        // 🌟 [수정] 입력 글자 스타일 (기본 폰트)
+                        style:
+                            const TextStyle(fontSize: 16, color: Colors.black),
+                        decoration: const InputDecoration(
+                          prefixIcon:
+                              Icon(Icons.email_outlined, color: Colors.grey),
+                          hintText: "이메일",
+                          // 🌟 [수정] 힌트 텍스트 스타일 (기본 폰트)
+                          hintStyle:
+                              TextStyle(color: Colors.grey, fontSize: 16),
+                          border: InputBorder.none, // 테두리 없애기
+                          contentPadding: EdgeInsets.symmetric(vertical: 16),
+                        ),
                       ),
                     ),
                   ),
@@ -259,19 +270,28 @@ class _LoginScreenState extends State<LoginScreen> {
                       color: Colors.grey[100],
                       borderRadius: BorderRadius.circular(16),
                     ),
-                    child: TextField(
-                      controller: _passwordController,
-                      obscureText: true,
-                      style: const TextStyle(fontFamily: 'manru'),
-                      onSubmitted: (_) => _handleLogin(), // 엔터키 로그인 유지
-                      decoration: const InputDecoration(
-                        prefixIcon:
-                            Icon(Icons.lock_outline, color: Colors.grey),
-                        hintText: "비밀번호",
-                        hintStyle:
-                            TextStyle(color: Colors.grey, fontFamily: 'manru'),
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(vertical: 16),
+                    child: Theme(
+                      data: ThemeData(
+                        colorScheme: Theme.of(context).colorScheme,
+                        useMaterial3: true,
+                      ),
+                      child: TextField(
+                        controller: _passwordController,
+                        obscureText: true,
+                        // 🌟 [수정] 입력 글자 스타일 (기본 폰트)
+                        style:
+                            const TextStyle(fontSize: 16, color: Colors.black),
+                        onSubmitted: (_) => _handleLogin(), // 엔터키 로그인 유지
+                        decoration: const InputDecoration(
+                          prefixIcon:
+                              Icon(Icons.lock_outline, color: Colors.grey),
+                          hintText: "비밀번호",
+                          // 🌟 [수정] 힌트 텍스트 스타일 (기본 폰트)
+                          hintStyle:
+                              TextStyle(color: Colors.grey, fontSize: 16),
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(vertical: 16),
+                        ),
                       ),
                     ),
                   ),
