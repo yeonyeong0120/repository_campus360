@@ -1,9 +1,11 @@
 // lib/screens/chatbot_sheet.dart
 // 나중에 수정할때 참고...
 // nextId -> 다음질문 // answer -> 종착지?
+// lib/screens/chatbot_sheet.dart
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:repository_campus360/widgets/common_image.dart';
+import 'package:google_generative_ai/google_generative_ai.dart'; // AI 패키지
+import '../consts/school_info.dart'; // 프롬프트 데이터
 
 class ChatbotSheet extends StatefulWidget {
   const ChatbotSheet({super.key});
@@ -13,188 +15,193 @@ class ChatbotSheet extends StatefulWidget {
 }
 
 class _ChatbotSheetState extends State<ChatbotSheet> {
-  // start부터 시작
-  String _currentDocId = 'start';
-  
-  // 답변을 보여줄 때 사용할 변수들
-  String? _selectedAnswer;
-  String? _selectedImage;
+  final List<Map<String, String>> _chatHistory = []; // 대화 기록
+  final TextEditingController _textController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+  bool _isLoading = false;
 
-  // [기능] 버튼 눌렀을 때 처리 로직
-  void _handleButtonPress(Map<String, dynamic> branch) {
-    // 1. 다음 질문으로 넘어가는 경우 (nextId가 있을 때)
-    if (branch.containsKey('nextId')) {
+  late final GenerativeModel _model;
+  final String _apiKey = 'AIzaSyCR9N8bugWMjVZDWabz9r6qdN2HxrnraGg'; 
+
+  @override
+  void initState() {
+    super.initState();
+    // 챗봇 시작할 때 환영 메시지 하나 넣어주기
+    _chatHistory.add({'role': 'bot', 'text': '안녕하세요! 캠퍼스 톡입니다. 무엇을 도와드릴까요? 😊'});
+    
+    // Gemini 설정
+    _model = GenerativeModel(
+      model: 'gemini-1.5-flash',
+      apiKey: _apiKey,
+      systemInstruction: Content.system(schoolPrompt),
+    );
+  }
+
+  // 메시지 전송 함수
+  Future<void> _sendMessage({String? text}) async {
+    final message = text ?? _textController.text.trim();
+    if (message.isEmpty) return;
+
+    setState(() {
+      _chatHistory.add({'role': 'user', 'text': message});
+      if (text == null) _textController.clear(); // 버튼 클릭이 아닐 때만 지움
+      _isLoading = true;
+    });
+    _scrollToBottom();
+
+    try {
+      final content = [Content.text(message)];
+      final response = await _model.generateContent(content);
+
       setState(() {
-        _currentDocId = branch['nextId']; // 문서 ID 변경 -> 화면 갱신
-        _selectedAnswer = null; // 답변 초기화
-        _selectedImage = null;
+        _chatHistory.add({'role': 'bot', 'text': response.text ?? "답변을 생성하지 못했습니다."});
       });
-    } 
-    // 2. 답변을 보여주는 경우 (answer가 있을 때)
-    else if (branch.containsKey('answer')) {
+    } catch (e) {
       setState(() {
-        _selectedAnswer = branch['answer']; // 답변 텍스트 저장
-        _selectedImage = branch['image'];   // 이미지 경로 저장 (있으면)
+        _chatHistory.add({'role': 'bot', 'text': "오류가 발생했습니다: $e"});
       });
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+      _scrollToBottom();
     }
   }
 
-  // 처음으로 돌아가기
-  void _resetChat() {
-    setState(() {
-      _currentDocId = 'start';
-      _selectedAnswer = null;
-      _selectedImage = null;
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    // 키보드 올라왔을 때 가림 방지
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+
     return Container(
-      height: 500, // 시트 높이
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.only(bottom: bottomInset),
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: Column(
         children: [
-          // 1. 헤더 (아이콘 + 제목 + 닫기 버튼)
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Row(
-                children: [
-                  Icon(Icons.auto_awesome, color: Colors.blue),
-                  SizedBox(width: 8),
-                  Text("캠퍼스 톡", style: TextStyle(fontSize: 21, fontWeight: FontWeight.bold, color: Color.fromARGB(255, 44, 90, 149))),
-                ],
-              ),
-              IconButton(
-                icon: const Icon(Icons.close),
-                onPressed: () => Navigator.pop(context),
-              ),
-            ],
+          // 1. 헤더
+          Padding(
+            padding: const EdgeInsets.all(15),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Row(
+                  children: [
+                    Icon(Icons.auto_awesome, color: Colors.blue),
+                    SizedBox(width: 8),
+                    Text("캠퍼스 톡 (AI)", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  ],
+                ),
+                IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
+              ],
+            ),
           ),
-          const Divider(),
-          
-          // 2. 대화 내용 영역 (DB 연동)
+          const Divider(height: 1),
+
+          // 2. 채팅 리스트
           Expanded(
-            child: StreamBuilder<DocumentSnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('chatbot_qna')
-                  .doc(_currentDocId)
-                  .snapshots(),
-              builder: (context, snapshot) {
-                // 로딩 중
-                if (!snapshot.hasData) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                
-                // 데이터 가져오기
-                final data = snapshot.data!.data() as Map<String, dynamic>?;
-                if (data == null) return const Text("데이터 오류");
-
-                final String msg = data['msg'] ?? "질문 내용이 없습니다.";
-                final List<dynamic> branches = data['branches'] ?? [];
-
-                return SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const SizedBox(height: 20),
-                      
-                      // 🤖 봇의 질문 (왼쪽 말풍선)
-                      _buildChatBubble(msg, isBot: true),
-                      
-                      const SizedBox(height: 20),
-
-                      // 👉 사용자 선택지 (답변이 아직 없을 때만 보임)
-                      if (_selectedAnswer == null)
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: branches.map((branch) {
-                            return ActionChip(
-                              label: Text(branch['label'] ?? '버튼'),
-                              backgroundColor: Colors.blue[50],
-                              labelStyle: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
-                              onPressed: () => _handleButtonPress(branch),
-                            );
-                          }).toList(),
-                        ),
-
-                      // 💡 답변 결과 (답변이 선택되었을 때 보임)
-                      if (_selectedAnswer != null) ...[
-                        const SizedBox(height: 20),
-                        // 답변 텍스트
-                        _buildChatBubble(_selectedAnswer!, isBot: true, isAnswer: true),
-                        
-                        // 🖼️ 약도 이미지
-                        if (_selectedImage != null && _selectedImage!.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 10, left: 10),
-                            child: CommonImage(
-                              _selectedImage,
-                              width: 200,
-                              height: 150,
-                              borderRadius: 10.0,
-                            ),
-                          ),
-
-                        const SizedBox(height: 30),
-                        
-                        // 처음으로 돌아가기 버튼
-                        Center(
-                          child: TextButton.icon(
-                            onPressed: _resetChat,
-                            style: TextButton.styleFrom(
-                            textStyle: const TextStyle(fontSize: 18), // 텍스트 크기
-                            iconSize: 24, // 아이콘 크기 (기본 24)
-                            ),
-                            icon: const Icon(Icons.refresh),
-                            label: const Text("처음부터 다시 물어보기"),
-                          ),
-                        ),
-                      ],
-                    ],
+            child: ListView.builder(
+              controller: _scrollController,
+              padding: const EdgeInsets.all(16),
+              itemCount: _chatHistory.length,
+              itemBuilder: (context, index) {
+                final chat = _chatHistory[index];
+                final isUser = chat['role'] == 'user';
+                return Align(
+                  alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(vertical: 4),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isUser ? Colors.blue[100] : Colors.grey[200],
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(chat['text']!, style: const TextStyle(fontSize: 15)),
                   ),
                 );
               },
+            ),
+          ),
+
+          // 3. 로딩 인디케이터
+          if (_isLoading)
+            const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: LinearProgressIndicator(),
+            ),
+
+          // 4. 추천 버튼 (Firestore 'start' 문서에서 가져오기)
+          SizedBox(
+            height: 50,
+            child: StreamBuilder<DocumentSnapshot>(
+              stream: FirebaseFirestore.instance.collection('chatbot_qna').doc('start').snapshots(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) return const SizedBox();
+                final data = snapshot.data!.data() as Map<String, dynamic>?;
+                if (data == null) return const SizedBox();
+                final branches = data['branches'] as List<dynamic>? ?? [];
+
+                return ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: branches.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 8),
+                  itemBuilder: (context, index) {
+                    final btn = branches[index];
+                    return ActionChip(
+                      label: Text(btn['label']),
+                      backgroundColor: Colors.blue[50],
+                      onPressed: () {
+                        // 버튼을 누르면 그 텍스트 그대로 AI에게 질문!
+                        _sendMessage(text: btn['label']);
+                      },
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+
+          // 5. 입력창
+          Container(
+            padding: const EdgeInsets.all(10),
+            color: Colors.grey[100],
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _textController,
+                    decoration: const InputDecoration(
+                      hintText: "궁금한 점을 물어보세요...",
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.symmetric(horizontal: 10),
+                    ),
+                    onSubmitted: (_) => _sendMessage(),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.send, color: Colors.blue),
+                  onPressed: () => _sendMessage(),
+                ),
+              ],
             ),
           ),
         ],
       ),
     );
   }
-
-  // 말풍선 디자인 위젯
-  Widget _buildChatBubble(String text, {required bool isBot, bool isAnswer = false}) {
-    return Align(
-      alignment: isBot ? Alignment.centerLeft : Alignment.centerRight,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        margin: const EdgeInsets.symmetric(horizontal: 5),
-        decoration: BoxDecoration(
-          color: isAnswer ? Colors.green[50] : (isBot ? Colors.grey[200] : Colors.blue[100]),
-          borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(16),
-            topRight: const Radius.circular(16),
-            bottomRight: isBot ? const Radius.circular(16) : Radius.zero,
-            bottomLeft: isBot ? Radius.zero : const Radius.circular(16),
-          ),
-        ),
-        child: Text(
-          text,
-          style: TextStyle(
-            color: Colors.black87,
-            fontSize: 16,
-            fontWeight: isAnswer ? FontWeight.bold : FontWeight.normal,
-          ),
-        ),
-      ),
-    );
-  }
-
-  
-  
 }
