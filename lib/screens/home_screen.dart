@@ -293,6 +293,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               child: InkWell(
                                 borderRadius: BorderRadius.circular(20),
                                 onTap: () {
+                                  // 🌟 [Navigation] ReservationDetailScreen 호출 (문제 라인)
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
@@ -520,20 +521,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
                 ),
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    IconButton(
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      icon: Icon(Icons.star_border_rounded,
-                          color: Colors.grey[400]),
-                      onPressed: () {},
-                    ),
-                    const SizedBox(height: 8),
-                    Icon(Icons.chevron_right,
-                        size: 20, color: Colors.grey[300]),
-                  ],
+                // 🌟 [수정] 별표 삭제 & 화살표 가운데 정렬
+                Icon(
+                  Icons.chevron_right,
+                  size: 24,
+                  color: Colors.grey[400],
                 ),
               ],
             ),

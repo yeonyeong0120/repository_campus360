@@ -1,6 +1,7 @@
 // lib/screens/map_screen.dart
 import 'package:flutter/material.dart';
 import 'search_screen.dart'; // 검색결과랑 연결
+import 'detail_screen.dart'; // 🌟 [필수] 상세 화면 연결
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -18,26 +19,25 @@ class _MapScreenState extends State<MapScreen> {
 
   // 층별 리스트 아이템 디자인
   // Widget _buildFloorTile(String floor, String description) {
-  //   return ListTile(
-  //     contentPadding: EdgeInsets.zero,
-  //     leading: CircleAvatar(
-  //       backgroundColor: Colors.blue[50],
-  //       child: Text(floor, style: const TextStyle(fontSize: 12, color: Colors.blue, fontWeight: FontWeight.bold)),
-  //     ),
-  //     title: Text(description),
-  //     trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
-  //     onTap: () {
-  //       // 특정 층을 눌러도 검색 화면으로 이동
-  //       Navigator.pop(context);
-  //       Navigator.push(context, MaterialPageRoute(builder: (_) => const SearchScreen()));
-  //     },
-  //   );
+  //   return ListTile(
+  //     contentPadding: EdgeInsets.zero,
+  //     leading: CircleAvatar(
+  //       backgroundColor: Colors.blue[50],
+  //       child: Text(floor, style: const TextStyle(fontSize: 12, color: Colors.blue, fontWeight: FontWeight.bold)),
+  //     ),
+  //     title: Text(description),
+  //     trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
+  //     onTap: () {
+  //       // 특정 층을 눌러도 검색 화면으로 이동
+  //       Navigator.pop(context);
+  //       Navigator.push(context, MaterialPageRoute(builder: (_) => const SearchScreen()));
+  //     },
+  //   );
   // }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA), // 🌟 배경을 앱 표준색으로 통일
       appBar: AppBar(title: const Text("캠퍼스 맵")),
       body: Container(
         decoration: const BoxDecoration(
@@ -74,8 +74,9 @@ class _MapScreenState extends State<MapScreen> {
                       // 1-2. 건물 핀 배치 // 픽셀좌표 그림판에서 볼수잇숨
                       _buildMapPin(2225, 500, "하이테크관"),
                       _buildMapPin(1162, 496, "대학 본관"),
+                      // 🌟 [추가] 사용자 데이터 기반 핀 위치 (대략적 위치, 필요시 수정)
                       _buildMapPin(2040, 1632, "1기술관"),
-                      _buildMapPin(1600, 1050, "2기술관"),
+                      _buildMapPin(1600, 1000, "2기술관"),
                       _buildMapPin(1830, 700, "3기술관"),
                       _buildMapPin(200, 1200, "5기술관"),
                       _buildMapPin(1450, 700, "6기술관"),
@@ -105,7 +106,7 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   //-------------메서드 모음들--------///
-  // 핀 디자인을 만드는 함수 (원래 디자인으로 복원)
+  // 핀 디자인을 만드는 함수
   Widget _buildMapPin(double x, double y, String name) {
     return Align(
       // 화면 크기가 변해도 핀 위치가 지도상의 정확한 곳에 고정됩니다.
@@ -116,7 +117,7 @@ class _MapScreenState extends State<MapScreen> {
           mainAxisSize: MainAxisSize.min, // 핀 크기만큼만 차지하게
           children: [
             const Icon(Icons.location_on_rounded,
-                color: Colors.redAccent, size: 25), // 🌟 원래 빨간색으로 복원
+                color: Colors.redAccent, size: 25),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
@@ -139,11 +140,12 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-  // 건물 상세 정보창 (🌟 [수정] 대표 추천 강의실만 노출 및 데이터 전달)
+  // 건물 상세 정보창 (🌟 [수정] 사용자 데이터 적용 및 추천 로직 구현)
   void _showBuildingDetail(String buildingName) {
-    // 1. 층별 강의실 데이터 정의 (사용자 데이터 반영)
+    // 🌟 [데이터] 사용자님께서 주신 강의실 데이터 반영
     final Map<String, List<Map<String, dynamic>>> buildingData = {
       "하이테크관": [
+        // 기존 데이터 예시
         {
           'floor': '3F',
           'rooms': ['디지털데이터활용실습실', '강의실 2']
@@ -219,7 +221,7 @@ class _MapScreenState extends State<MapScreen> {
       "대학 본관": [
         {
           'floor': '1F',
-          'rooms': ['로비', '행정실']
+          'rooms': ['행정실', '학생식당']
         },
       ],
     };
@@ -257,18 +259,17 @@ class _MapScreenState extends State<MapScreen> {
               const SizedBox(height: 10),
 
               // 층별 안내
-              const Text("층별 안내",
+              const Text("추천 강의실",
                   style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: Colors.grey)),
 
-              // 🌟 [수정] 대표 강의실만 ListTile로 보여주고 데이터 전달
+              // 🌟 [수정] 각 층의 '첫 번째' 강의실만 추천으로 표시
               ...floors.map((floorData) {
                 final floor = floorData['floor'] as String;
                 final rooms = floorData['rooms'] as List<String>;
-                // 첫 번째 방을 추천 방으로 지정
-                final recommendedRoom = rooms.first;
+                final recommendedRoom = rooms.first; // 첫 번째 방 추천
 
                 return ListTile(
                   contentPadding: EdgeInsets.zero,
@@ -280,31 +281,37 @@ class _MapScreenState extends State<MapScreen> {
                             color: Colors.blue,
                             fontWeight: FontWeight.bold)),
                   ),
-                  // 🌟 [추천 기능] 첫 번째 방만 (추천) 텍스트와 함께 표시
                   title: Text("$recommendedRoom (추천)"),
                   trailing: const Icon(Icons.arrow_forward_ios,
                       size: 14, color: Colors.grey),
                   onTap: () {
-                    // 🌟 [수정] 추천 방 이름과 건물 이름을 쿼리로 전달
-                    Navigator.pop(context); // 모달 닫기
+                    // 🌟 [기능 수정] 추천 강의실 누르면 -> 바로 상세 화면(DetailScreen)으로 이동
+                    Navigator.pop(context);
+
+                    // DetailScreen으로 넘길 데이터 생성
+                    final spaceData = {
+                      'name': recommendedRoom,
+                      'location': '$buildingName $floor',
+                      'capacity': '정보 없음', // DB에서 가져올 것이므로 임시값
+                    };
+
                     Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (_) => SearchScreen(
-                                initialQuery: recommendedRoom))); // 이동!
+                            builder: (_) => DetailScreen(space: spaceData)));
                   },
                 );
               }),
 
               const SizedBox(height: 20),
 
-              // 전체 보기 버튼 (🌟 [수정] 건물 이름을 쿼리로 전달)
+              // 전체 보기 버튼
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
                     Navigator.pop(context);
-                    // 🌟 [수정] 건물 이름을 쿼리로 전달하여 해당 건물의 모든 강의실 검색 유도
+                    // 🌟 [기능 유지] 전체 보기를 누르면 -> 검색 화면(SearchScreen)으로 이동하여 목록 표시
                     Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -326,7 +333,7 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-  // 바텀 시트 보여주는 메서드 (기존과 동일)
+  // 바텀 시트 보여주는 메서드
   void _showFilterModal(BuildContext context) {
     showModalBottomSheet(
       context: context,
