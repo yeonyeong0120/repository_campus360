@@ -67,8 +67,8 @@ flutter_launcher_icons:
   android: "launcher_icon"
   ios: true
   #image_path: "assets/images/logo.png"
-  image_path: "assets/images/logo_3D.png" # iOS용
+  image_path: "assets/images/logo_3d.png" # iOS용
   adaptive_icon_background: "#FFFFFF"  # 배경색
-  adaptive_icon_foreground: "assets/images/logo_3D.png" # 튜명배경해야함
+  adaptive_icon_foreground: "assets/images/logo_3d.png" # 튜명배경해야함
   
   min_sdk_android: 21

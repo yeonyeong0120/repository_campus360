@@ -3,7 +3,7 @@ import 'package:google_generative_ai/google_generative_ai.dart';
 
 void main() async {
   // 1. API 키 설정 (아까 복사한 거!)
-  const apiKey = 'AIzaSyCR9N8bugWMjVZDWabz9r6qdN2HxrnraGg';
+  const apiKey = 'temp';
 
   // 2. 모델 설정 (가장 빠르고 가벼운 gemini-1.5-flash 사용)
   final model = GenerativeModel(
