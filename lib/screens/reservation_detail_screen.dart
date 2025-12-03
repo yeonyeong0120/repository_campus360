@@ -13,12 +13,16 @@ class ReservationDetailScreen extends StatefulWidget {
 }
 
 class _ReservationDetailScreenState extends State<ReservationDetailScreen> {
+  // 기존 로직(리뷰 작성/삭제 등)은 그대로 유지합니다.
   final TextEditingController _reviewController = TextEditingController();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final User? currentUser = FirebaseAuth.instance.currentUser;
 
+  // 🌟 배경색: 연한 푸른색으로 고정 (회색 박멸)
+  final Color _backgroundColor = const Color(0xFFF0F5FA);
+
   int _currentRating = 5;
-  bool _isLoading = false; // final 제거 (상태 변경을 위해)
+  bool _isLoading = false;
   bool _hasReview = false;
   String? _reviewDocId;
 
@@ -35,8 +39,6 @@ class _ReservationDetailScreenState extends State<ReservationDetailScreen> {
     _reviewController.dispose();
     super.dispose();
   }
-
-  // 🔹 기존에 비어있던 함수들을 완전히 구현했습니다.
 
   // 1. 이미 작성된 리뷰가 있는지 확인하는 함수
   Future<void> _checkExistingReview() async {
@@ -144,21 +146,39 @@ class _ReservationDetailScreenState extends State<ReservationDetailScreen> {
     }
   }
 
-  // 4. 상태에 따른 텍스트 반환 (취소 상태 포함)
+  // 예약 취소 로직
+  Future<void> _cancelReservation() async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('reservations')
+          .doc(widget.reservation['docId'])
+          .update({'status': 'cancelled'});
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("예약이 취소되었습니다.")),
+        );
+        Navigator.pop(context); // 취소 후 리스트로 복귀
+      }
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  // Helper 함수들
   String getStatusText(String? status) {
     if (status == 'confirmed') return '예약 확정';
     if (status == 'completed') return '사용 완료';
-    if (status == 'canceled' || status == 'cancelled') return '예약 취소'; // 오타 대응
+    if (status == 'canceled' || status == 'cancelled') return '예약 취소';
     if (status == 'pending') return '예약 대기';
     return '상태 미정';
   }
 
-  // 5. 상태에 따른 색상 반환
   Color getStatusColor(String? status) {
     if (status == 'confirmed') return Colors.blue;
-    if (status == 'completed') return Colors.grey;
-    if (status == 'canceled' || status == 'cancelled') return Colors.red;
-    return Colors.orange; // pending
+    if (status == 'completed') return Colors.green;
+    if (status == 'canceled' || status == 'cancelled') return Colors.grey;
+    return Colors.orange;
   }
 
   Widget _buildStar(int index) {
@@ -181,75 +201,81 @@ class _ReservationDetailScreenState extends State<ReservationDetailScreen> {
           .snapshots(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
-          return const Scaffold(
-              backgroundColor: Color(0xFF333333),
-              body: Center(child: CircularProgressIndicator()));
+          return Scaffold(
+              backgroundColor: _backgroundColor,
+              body: const Center(child: CircularProgressIndicator()));
         }
 
         final data = snapshot.data!.data() as Map<String, dynamic>?;
         if (data == null) {
-          return const Scaffold(
-              backgroundColor: Color(0xFF333333),
-              body: Center(
-                  child:
-                      Text("데이터 없음", style: TextStyle(color: Colors.white))));
+          return const Scaffold(body: Center(child: Text("데이터 없음")));
         }
 
         final currentStatus = data['status'] ?? 'pending';
 
         return Scaffold(
-          backgroundColor: const Color(0xFF333333), // 🌟 배경을 어둡게 하여 티켓에 집중
+          backgroundColor: _backgroundColor, // 🌟 회색 배경 제거 -> 푸른색 적용
           appBar: AppBar(
-            title: const Text('TICKET DETAIL',
+            title: const Text('상세 정보',
                 style: TextStyle(
-                    color: Colors.white,
+                    color: Colors.black, // 배경이 밝으므로 글씨는 검정
                     fontFamily: 'manru',
                     fontWeight: FontWeight.bold,
                     letterSpacing: 1.2)),
             centerTitle: true,
-            backgroundColor: Colors.transparent,
+            backgroundColor: _backgroundColor, // AppBar 배경도 통일
             elevation: 0,
-            iconTheme: const IconThemeData(color: Colors.white),
+            iconTheme: const IconThemeData(color: Colors.black), // 아이콘 검정
           ),
           body: SingleChildScrollView(
+            physics: const ClampingScrollPhysics(), // 바운스 효과 제거 (깔끔하게)
             padding: const EdgeInsets.all(24.0),
             child: Column(
               children: [
                 // 🎫 상세 정보 티켓 디자인 (영수증처럼 길게)
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(24),
+                  padding: const EdgeInsets.all(32),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color:
+                            Colors.black.withValues(alpha: 0.05), // withValues
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
+                      )
+                    ],
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       // 상단 아이콘
                       Container(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                            color:
-                                getStatusColor(currentStatus).withValues(alpha: 0.1),
+                            color: getStatusColor(currentStatus)
+                                .withValues(alpha: 0.1), // withValues
                             shape: BoxShape.circle),
                         child: Icon(
                           currentStatus == 'confirmed'
                               ? Icons.check_circle
                               : currentStatus == 'completed'
                                   ? Icons.task_alt
-                                  : currentStatus == 'canceled'
+                                  : currentStatus == 'canceled' ||
+                                          currentStatus == 'cancelled'
                                       ? Icons.cancel
                                       : Icons.schedule,
-                          size: 40,
+                          size: 48,
                           color: getStatusColor(currentStatus),
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 24),
                       Text(
                         data['spaceName'] ?? 'Unknown Space',
                         style: const TextStyle(
-                            fontSize: 22,
+                            fontSize: 24,
                             fontWeight: FontWeight.bold,
                             fontFamily: 'manru'),
                         textAlign: TextAlign.center,
@@ -260,29 +286,18 @@ class _ReservationDetailScreenState extends State<ReservationDetailScreen> {
                         style: TextStyle(
                             color: getStatusColor(currentStatus),
                             fontWeight: FontWeight.bold,
-                            fontSize: 16),
+                            fontSize: 18),
                       ),
-                      const SizedBox(height: 32),
+                      const SizedBox(height: 40),
 
                       // 정보 Row들
-                      _buildDetailRow("DATE", data['date'] ?? '-'),
-                      _buildDetailRow("TIME", data['timeSlot'] ?? '-'),
-                      _buildDetailRow("GUEST", data['userName'] ?? 'User'),
-                      _buildDetailRow("BOOKING ID",
+                      _buildDetailRow("날짜", data['date'] ?? '-'),
+                      _buildDetailRow("시간", data['timeSlot'] ?? '-'),
+                      _buildDetailRow("예약자", data['userName'] ?? 'User'),
+                      _buildDetailRow("티켓 번호",
                           data['docId']?.substring(0, 8).toUpperCase() ?? '-'),
 
-                      const SizedBox(height: 32),
-                      // 점선
-                      Row(
-                          children: List.generate(
-                              30,
-                              (i) => Expanded(
-                                  child: Container(
-                                      color: i % 2 == 0
-                                          ? Colors.transparent
-                                          : Colors.grey[300],
-                                      height: 2)))),
-                      const SizedBox(height: 32),
+                      const SizedBox(height: 40),
 
                       // 취소 버튼 (확정/대기 상태일 때만)
                       if (currentStatus == 'pending' ||
@@ -290,17 +305,19 @@ class _ReservationDetailScreenState extends State<ReservationDetailScreen> {
                         SizedBox(
                           width: double.infinity,
                           child: OutlinedButton(
-                            onPressed: () => Navigator.pop(context),
+                            onPressed: _cancelReservation,
                             style: OutlinedButton.styleFrom(
                                 foregroundColor: Colors.red,
                                 side: const BorderSide(color: Colors.red),
                                 padding:
-                                    const EdgeInsets.symmetric(vertical: 16)),
+                                    const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12))),
                             child: const Text("예약 취소"),
                           ),
                         ),
 
-                      // 360도 뷰 버튼
+                      // 360도 뷰 버튼 (기존 유지)
                       if (data['view360Url'] != null &&
                           data['view360Url'] != '') ...[
                         const SizedBox(height: 12),
@@ -319,57 +336,65 @@ class _ReservationDetailScreenState extends State<ReservationDetailScreen> {
 
                 // 📝 하단 리뷰 섹션 (완료된 경우에만 표시)
                 if (currentStatus == 'completed') ...[
-                  const Text("YOUR REVIEW",
+                  const Text("리뷰 작성",
                       style: TextStyle(
-                          color: Colors.white,
+                          color: Colors.black54,
+                          fontSize: 18,
                           fontWeight: FontWeight.bold,
                           letterSpacing: 1.5)),
-                  const SizedBox(height: 12),
-                  
+                  const SizedBox(height: 16),
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.1),
+                        color: Colors.white,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.white24)),
-                    child: _isLoading 
-                      ? const Center(child: CircularProgressIndicator()) // 로딩 중일 때
-                      : Column(
+                        boxShadow: [
+                          BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.05),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4))
+                        ]),
+                    child: Column(
                       children: [
-                        // 1. 별점 표시
                         Row(
                             mainAxisAlignment: MainAxisAlignment.center,
-                            children: List.generate(5, (index) => _buildStar(index))
-                        ),
+                            children:
+                                List.generate(5, (index) => _buildStar(index))),
                         const SizedBox(height: 16),
-
-                        // 2. 리뷰 작성 칸 vs 이미 쓴 리뷰 내용 ( _hasReview 변수 사용! )
                         TextField(
                           controller: _reviewController,
-                          style: const TextStyle(color: Colors.white),
+                          style: const TextStyle(color: Colors.black),
                           maxLines: 3,
                           // 리뷰가 이미 있으면 수정 못하게 막기 (읽기 전용)
-                          readOnly: _hasReview, 
+                          readOnly: _hasReview,
                           decoration: InputDecoration(
-                            hintText: _hasReview ? "작성한 리뷰가 없습니다." : "상세한 이용 후기를 남겨주세요.",
-                            hintStyle: const TextStyle(color: Colors.white54),
-                            enabledBorder: const OutlineInputBorder(
-                                borderSide: BorderSide(color: Colors.white24)),
-                            focusedBorder: const OutlineInputBorder(
-                                borderSide: BorderSide(color: Colors.blue)),
+                            hintText: _hasReview
+                                ? "작성한 리뷰가 없습니다."
+                                : "상세한 이용 후기를 남겨주세요.",
+                            hintStyle: const TextStyle(color: Colors.grey),
+                            fillColor: const Color(0xFFF5F5F5),
+                            filled: true,
+                            enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none),
+                            focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide:
+                                    const BorderSide(color: Colors.blue)),
                           ),
                         ),
                         const SizedBox(height: 16),
-
-                        // 3. 버튼 (저장 vs 삭제) - ( _deleteReview 함수 사용! )
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
                             onPressed: _isLoading ? null : _submitReview,
                             style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.blue,
+                                backgroundColor: Colors.green,
+                                foregroundColor: Colors.white,
                                 padding:
-                                    const EdgeInsets.symmetric(vertical: 16)),
+                                    const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12))),
                             child: _isLoading
                                 ? const SizedBox(
                                     height: 20,
