@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:intl/intl.dart';
-import 'dart:math' as math;
+// 🌟 [중요] 아래 import가 있어야 상세 페이지로 이동할 때 에러가 나지 않습니다.
+import 'reservation_detail_screen.dart';
 
 class MyHistoryScreen extends StatefulWidget {
   const MyHistoryScreen({super.key});
@@ -14,6 +14,9 @@ class MyHistoryScreen extends StatefulWidget {
 class _MyHistoryScreenState extends State<MyHistoryScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+
+  // 🌟 배경색: 연한 푸른색으로 고정 (회색 박멸)
+  final Color _backgroundColor = const Color(0xFFF0F5FA);
 
   @override
   void initState() {
@@ -46,11 +49,13 @@ class _MyHistoryScreenState extends State<MyHistoryScreen>
   Widget build(BuildContext context) {
     final User? user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      return const Scaffold(body: Center(child: Text("로그인이 필요합니다.")));
+      return Scaffold(
+          backgroundColor: _backgroundColor,
+          body: const Center(child: Text("로그인이 필요합니다.")));
     }
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: _backgroundColor, // 🌟 전체 배경색 통일
       appBar: AppBar(
         title: const Text("내 상세 내역",
             style: TextStyle(
@@ -58,7 +63,7 @@ class _MyHistoryScreenState extends State<MyHistoryScreen>
                 fontWeight: FontWeight.bold,
                 fontFamily: 'manru')),
         centerTitle: true,
-        backgroundColor: Colors.white,
+        backgroundColor: _backgroundColor, // 🌟 AppBar 배경도 통일
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.black),
         bottom: TabBar(
@@ -71,39 +76,30 @@ class _MyHistoryScreenState extends State<MyHistoryScreen>
           tabs: const [Tab(text: "내 티켓"), Tab(text: "리뷰 쓰기")],
         ),
       ),
-      body: Container(
-        color: Colors.white,
-        child: TabBarView(
-          controller: _tabController,
-          children: [
-            _buildReservationList(user.uid), // 탭 1: 티켓 지갑
-            _buildReviewManagementTab(user.uid) // 탭 2: 리뷰 작성/수정 (발랄한 디자인)
-          ],
-        ),
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          _buildReservationList(user.uid), // 탭 1: 티켓 리스트
+          _buildReviewManagementTab(user.uid) // 탭 2: 리뷰 관리
+        ],
       ),
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // 탭 1: 예약 내역 (티켓)
-  // ---------------------------------------------------------------------------
+  // 탭 1: 예약 내역 리스트 (기본형)
   Widget _buildReservationList(String uid) {
     return StreamBuilder<QuerySnapshot>(
-      // 🌟 필터링 단순화: 데이터가 안 뜨면 .orderBy 제거하고 인덱스 생성부터 하세요!
       stream: FirebaseFirestore.instance
           .collection('reservations')
           .where('userId', isEqualTo: uid)
           .snapshots(),
       builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return Center(child: Text("로딩 오류: ${snapshot.error}"));
-        }
-        if (!snapshot.hasData) {
+        if (snapshot.hasError)
+          return Center(child: Text("오류: ${snapshot.error}"));
+        if (!snapshot.hasData)
           return const Center(child: CircularProgressIndicator());
-        }
 
-        final docs = snapshot.data!.docs;
-
+        final docs = List.of(snapshot.data!.docs);
         if (docs.isEmpty) {
           return const Center(
             child: Text("발급된 티켓이 없습니다.",
@@ -111,7 +107,7 @@ class _MyHistoryScreenState extends State<MyHistoryScreen>
           );
         }
 
-        // 클라이언트 정렬 (Firestore 인덱스 오류 방지용 안전 장치)
+        // 최신순 정렬
         docs.sort((a, b) {
           var aTime = (a.data() as Map)['createdAt'] as Timestamp?;
           var bTime = (b.data() as Map)['createdAt'] as Timestamp?;
@@ -125,23 +121,24 @@ class _MyHistoryScreenState extends State<MyHistoryScreen>
         return ListView.separated(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
           itemCount: docs.length,
-          separatorBuilder: (context, index) => const SizedBox(height: 24),
+          separatorBuilder: (context, index) => const SizedBox(height: 16),
           itemBuilder: (context, index) {
             final data = docs[index].data() as Map<String, dynamic>;
             data['docId'] = docs[index].id;
 
-            return FlipTicketItem(data: data);
+            // 🌟 일반 클릭 가능한 카드로 변경 (에러 원인이었던 부분)
+            return SimpleTicketItem(
+              key: ValueKey(data['docId']),
+              data: data,
+            );
           },
         );
       },
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // 탭 2: 리뷰 관리 (🌟 발랄한 디자인 적용)
-  // ---------------------------------------------------------------------------
+  // 탭 2: 리뷰 관리
   Widget _buildReviewManagementTab(String uid) {
-    // 이용 완료(completed)된 예약만 가져옴
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('reservations')
@@ -151,8 +148,8 @@ class _MyHistoryScreenState extends State<MyHistoryScreen>
       builder: (context, snapshot) {
         if (!snapshot.hasData)
           return const Center(child: CircularProgressIndicator());
-        final docs = snapshot.data!.docs;
 
+        final docs = List.of(snapshot.data!.docs);
         if (docs.isEmpty) {
           return Center(
             child: Column(
@@ -169,7 +166,6 @@ class _MyHistoryScreenState extends State<MyHistoryScreen>
           );
         }
 
-        // 최신순 정렬
         docs.sort((a, b) {
           var aTime = (a.data() as Map)['createdAt'] as Timestamp?;
           var bTime = (b.data() as Map)['createdAt'] as Timestamp?;
@@ -185,9 +181,8 @@ class _MyHistoryScreenState extends State<MyHistoryScreen>
           itemBuilder: (context, index) {
             final data = docs[index].data() as Map<String, dynamic>;
             data['docId'] = docs[index].id;
-
-            // 🌟 디자인 변경된 리뷰 아이템
-            return ReviewActionItem(reservationData: data);
+            return ReviewActionItem(
+                key: ValueKey(data['docId']), reservationData: data);
           },
         );
       },
@@ -195,271 +190,120 @@ class _MyHistoryScreenState extends State<MyHistoryScreen>
   }
 }
 
-// ---------------------------------------------------------------------------
-// 🎫 티켓 아이템 (취소된 티켓 클릭 무시)
-// ---------------------------------------------------------------------------
-class FlipTicketItem extends StatefulWidget {
+// -----------------------------------------------------------------------------
+// 2. 심플 티켓 아이템 위젯 (MyHistoryScreen에서 사용)
+// -----------------------------------------------------------------------------
+class SimpleTicketItem extends StatelessWidget {
   final Map<String, dynamic> data;
-  const FlipTicketItem({super.key, required this.data});
-
-  @override
-  State<FlipTicketItem> createState() => _FlipTicketItemState();
-}
-
-class _FlipTicketItemState extends State<FlipTicketItem>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _flipController;
-  late Animation<double> _animation;
-  bool _isFront = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _flipController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 600));
-    _animation = Tween<double>(begin: 0, end: 1).animate(
-        CurvedAnimation(parent: _flipController, curve: Curves.easeInOutBack));
-  }
-
-  @override
-  void dispose() {
-    _flipController.dispose();
-    super.dispose();
-  }
-
-  void _flipCard() {
-    if (_isFront)
-      _flipController.forward();
-    else
-      _flipController.reverse();
-    setState(() => _isFront = !_isFront);
-  }
-
-  void _onTicketTap() {
-    final status = widget.data['status'];
-
-    // 🌟 [핵심] 취소된 예약은 아예 무반응 (Return)
-    if (status == 'cancelled' || status == 'rejected') return;
-
-    if (status == 'pending') {
-      _flipCard(); // 대기 중이면 뒤집어서 취소 버튼 노출
-    } else if (status == 'completed') {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text("리뷰는 '리뷰 쓰기' 탭에서 작성해주세요! 📝"),
-          duration: Duration(milliseconds: 1000)));
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text("확정된 티켓입니다."), duration: Duration(milliseconds: 1000)));
-    }
-  }
-
-  // 예약 취소 로직
-  Future<void> _cancelReservation() async {
-    try {
-      await FirebaseFirestore.instance
-          .collection('reservations')
-          .doc(widget.data['docId'])
-          .update({'status': 'cancelled'});
-      _flipCard(); // 다시 앞면으로
-    } catch (e) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("오류: $e")));
-    }
-  }
+  const SimpleTicketItem({super.key, required this.data});
 
   @override
   Widget build(BuildContext context) {
-    final status = widget.data['status'];
-    final bool isCancelled = (status == 'cancelled' || status == 'rejected');
+    final status = data['status'];
+    Color statusColor = Colors.black;
+    String statusText = "";
+
+    if (status == 'pending') {
+      statusColor = Colors.orange;
+      statusText = "대기중";
+    } else if (status == 'confirmed') {
+      statusColor = Colors.blue;
+      statusText = "확정됨";
+    } else if (status == 'completed') {
+      statusColor = Colors.green;
+      statusText = "사용완료";
+    } else if (status == 'cancelled' || status == 'rejected') {
+      statusColor = Colors.grey;
+      statusText = "취소됨";
+    }
 
     return GestureDetector(
-      onTap: _onTicketTap,
-      child: AnimatedBuilder(
-        animation: _animation,
-        builder: (context, child) {
-          final angle = _animation.value * math.pi;
-          final transform = Matrix4.identity()
-            ..setEntry(3, 2, 0.001)
-            ..rotateY(angle);
-          return Transform(
-            transform: transform,
-            alignment: Alignment.center,
-            child: _animation.value < 0.5
-                ? _buildFrontSide(status, isCancelled)
-                : Transform(
-                    transform: Matrix4.identity()..rotateY(math.pi),
-                    alignment: Alignment.center,
-                    child: _buildBackSide(),
-                  ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildFrontSide(String? status, bool isCancelled) {
-    Color themeColor = Colors.black;
-    if (status == 'pending') themeColor = Colors.orange;
-    if (status == 'confirmed') themeColor = Colors.blue;
-    if (status == 'cancelled' || status == 'rejected') themeColor = Colors.red;
-    if (status == 'completed') themeColor = Colors.grey;
-
-    return ColorFiltered(
-      colorFilter: isCancelled
-          ? const ColorFilter.mode(Colors.grey, BlendMode.saturation)
-          : const ColorFilter.mode(Colors.transparent, BlendMode.multiply),
-      child: ClipPath(
-        clipper: TicketClipper(),
-        child: Container(
-          height: 190,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4))
-            ],
+      onTap: () {
+        // 🌟 여기가 에러가 나던 부분입니다.
+        // 이제 import가 되어 있으므로 에러 없이 이동합니다.
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ReservationDetailScreen(reservation: data),
           ),
-          child: Stack(
-            children: [
-              Positioned(
-                  left: 0,
-                  top: 0,
-                  bottom: 0,
-                  child: Container(width: 8, color: themeColor)),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(28, 20, 20, 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(widget.data['spaceName'] ?? 'SPACE TICKET',
-                        style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'manru'),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis),
-                    const SizedBox(height: 8),
-                    Text("${widget.data['date']} | ${widget.data['timeSlot']}",
-                        style:
-                            TextStyle(color: Colors.grey[600], fontSize: 14)),
-                    const Spacer(),
-                    Row(
-                        children: List.generate(
-                            30,
-                            (index) => Expanded(
-                                child: Container(
-                                    color: index % 2 == 0
-                                        ? Colors.transparent
-                                        : Colors.grey[300],
-                                    height: 1)))),
-                    const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                            children: List.generate(
-                                16,
-                                (index) => Container(
-                                    width: index % 3 == 0 ? 1 : 3,
-                                    height: 24,
-                                    margin: const EdgeInsets.only(right: 3),
-                                    color: Colors.black87))),
-                        Text(
-                            "NO. ${widget.data['docId'].substring(0, 4).toUpperCase()}",
-                            style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.grey)),
-                      ],
-                    )
-                  ],
-                ),
-              ),
-              if (status != 'pending')
-                Positioned(
-                  top: 50,
-                  right: 40,
-                  child: Transform.rotate(
-                    angle: -0.3,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 6),
-                      decoration: BoxDecoration(
-                          border: Border.all(
-                              color: themeColor.withOpacity(0.5), width: 3),
-                          borderRadius: BorderRadius.circular(8)),
-                      child: Text(
-                        status == 'confirmed'
-                            ? "CONFIRMED"
-                            : status == 'completed'
-                                ? "USED"
-                                : "CANCELLED",
-                        style: TextStyle(
-                            color: themeColor.withOpacity(0.7),
-                            fontWeight: FontWeight.w900,
-                            fontSize: 16,
-                            letterSpacing: 1.5),
-                      ),
-                    ),
-                  ),
-                ),
-              if (status == 'pending')
-                Positioned(
-                    bottom: 10,
-                    right: 10,
-                    child: Row(children: [
-                      Text("터치하여 취소 >",
-                          style: TextStyle(fontSize: 10, color: Colors.grey))
-                    ]))
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // 뒷면: 예약 취소 버튼
-  Widget _buildBackSide() {
-    return ClipPath(
-      clipper: TicketClipper(),
+        );
+      },
       child: Container(
-        height: 190,
+        height: 120, // 높이 고정으로 깔끔하게
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: const Color(0xFFFAFAFA),
+          color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey.shade300),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05), // withValues 사용
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text("예약을 취소하시겠습니까?",
-                  style: TextStyle(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 16),
-              ElevatedButton.icon(
-                onPressed: _cancelReservation,
-                icon: const Icon(Icons.cancel_outlined, size: 16),
-                label: const Text("예약 취소하기"),
-                style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red, foregroundColor: Colors.white),
+        child: Row(
+          children: [
+            // 왼쪽: 상태 컬러 바
+            Container(
+              width: 6,
+              decoration: BoxDecoration(
+                color: statusColor,
+                borderRadius: BorderRadius.circular(4),
               ),
-              TextButton(
-                  onPressed: _flipCard,
-                  child: const Text("닫기", style: TextStyle(color: Colors.grey)))
-            ],
-          ),
+            ),
+            const SizedBox(width: 16),
+            // 중간: 정보
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    data['spaceName'] ?? 'Unknown Space',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'manru',
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "${data['date']} | ${data['timeSlot']}",
+                    style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                  ),
+                ],
+              ),
+            ),
+            // 오른쪽: 상태 텍스트 및 아이콘
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  statusText,
+                  style: TextStyle(
+                    color: statusColor,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Icon(Icons.arrow_forward_ios_rounded,
+                    size: 16, color: Colors.grey[300]),
+              ],
+            )
+          ],
         ),
       ),
     );
   }
 }
 
-// ---------------------------------------------------------------------------
-// 📝 🌟 리뷰 관리 아이템 (디자인 대폭 수정: 발랄한 티켓 메모 느낌)
-// ---------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+// 3. 리뷰 관리 아이템 위젯 (ReviewActionItem)
+// -----------------------------------------------------------------------------
 class ReviewActionItem extends StatefulWidget {
   final Map<String, dynamic> reservationData;
   const ReviewActionItem({super.key, required this.reservationData});
@@ -496,17 +340,14 @@ class _ReviewActionItemState extends State<ReviewActionItem> {
           _reviewId = null;
         }
 
-        // 🌟 디자인: 포스트잇이나 메모지 느낌의 컨테이너
         return Container(
           decoration: BoxDecoration(
-            color: hasReview
-                ? const Color(0xFFFFF9C4)
-                : Colors.white, // 리뷰 있으면 노란색 메모 느낌
+            color: hasReview ? const Color(0xFFFFF9C4) : Colors.white,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: Colors.black12),
             boxShadow: [
               BoxShadow(
-                  color: Colors.grey.withOpacity(0.1),
+                  color: Colors.grey.withValues(alpha: 0.1), // withValues
                   blurRadius: 6,
                   offset: const Offset(2, 4))
             ],
@@ -514,14 +355,14 @@ class _ReviewActionItemState extends State<ReviewActionItem> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // 1. 헤더: 공간 이름 (티켓 윗부분처럼)
+              // 헤더
               Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
                   color: hasReview
                       ? const Color(0xFFFFF176)
-                      : Colors.blue.withOpacity(0.1),
+                      : Colors.blue.withValues(alpha: 0.1), // withValues
                   borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(16),
                       topRight: Radius.circular(16)),
@@ -553,7 +394,7 @@ class _ReviewActionItemState extends State<ReviewActionItem> {
                 child: Column(
                   children: [
                     if (!_isEditing && !hasReview)
-                      // A. 작성 전: 발랄한 버튼
+                      // A. 작성 전
                       Column(
                         children: [
                           const Text("어땠나요? 솔직한 후기를 남겨주세요!",
@@ -579,7 +420,7 @@ class _ReviewActionItemState extends State<ReviewActionItem> {
                         ],
                       )
                     else if (!_isEditing && hasReview)
-                      // B. 작성 완료: 내용 보여주기
+                      // B. 작성 완료
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -588,16 +429,15 @@ class _ReviewActionItemState extends State<ReviewActionItem> {
                             children: [
                               Row(
                                 children: List.generate(
-                                    5,
-                                    (i) => Icon(Icons.star_rounded,
-                                        size: 20,
-                                        color: i <
-                                                (_existingReview!['rating'] ??
-                                                    5)
-                                            ? Colors.orange
-                                            : Colors.white)),
+                                  5,
+                                  (i) => Icon(Icons.star_rounded,
+                                      size: 20,
+                                      color:
+                                          i < (_existingReview!['rating'] ?? 5)
+                                              ? Colors.orange
+                                              : Colors.white),
+                                ),
                               ),
-                              // 수정/삭제 메뉴
                               Row(
                                 children: [
                                   IconButton(
@@ -729,23 +569,4 @@ class _ReviewActionItemState extends State<ReviewActionItem> {
       },
     );
   }
-}
-
-class TicketClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) {
-    Path path = Path();
-    path.lineTo(0.0, size.height);
-    path.lineTo(size.width, size.height);
-    path.lineTo(size.width, 0.0);
-    path.addOval(
-        Rect.fromCircle(center: Offset(0.0, size.height * 0.72), radius: 8.0));
-    path.addOval(Rect.fromCircle(
-        center: Offset(size.width, size.height * 0.72), radius: 8.0));
-    path.fillType = PathFillType.evenOdd;
-    return path;
-  }
-
-  @override
-  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }
