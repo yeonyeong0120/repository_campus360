@@ -211,10 +211,8 @@ class _MyHistoryScreenState extends State<MyHistoryScreen>
         return Container(
           color: _backgroundColor,
           child: ListView.separated(
-            // 🛠 [수정됨] ClampingScrollPhysics -> AlwaysScrollableScrollPhysics
-            // Clamping은 스크롤 끝에서 강제로 멈추는데, 리스트가 길어지면 렌더링 오류가 발생할 수 있습니다.
-            // AlwaysScrollableScrollPhysics는 부드러운 스크롤을 보장하며 오류를 방지합니다.
-            physics: const AlwaysScrollableScrollPhysics(),
+            physics: const BouncingScrollPhysics(), 
+            
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
             itemCount: docs.length,
             separatorBuilder: (context, index) => const SizedBox(height: 16),
@@ -274,7 +272,8 @@ class _MyHistoryScreenState extends State<MyHistoryScreen>
         return Container(
           color: _backgroundColor,
           child: ListView.separated(
-            physics: const ClampingScrollPhysics(),
+            physics: const BouncingScrollPhysics(),
+            
             padding: const EdgeInsets.all(20),
             itemCount: docs.length,
             separatorBuilder: (context, index) => const SizedBox(height: 20),
@@ -284,7 +283,7 @@ class _MyHistoryScreenState extends State<MyHistoryScreen>
               return ReviewActionItem(
                   key: ValueKey(data['docId']), reservationData: data);
             },
-          ),
+          ), // 리스트뷰
         );
       },
     );
