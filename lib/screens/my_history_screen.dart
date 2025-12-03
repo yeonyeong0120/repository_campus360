@@ -387,8 +387,8 @@ class _SimpleTicketItemState extends State<SimpleTicketItem>
     Color themeColor = Colors.black;
     if (status == 'pending') themeColor = Colors.orange;
     if (status == 'confirmed') themeColor = Colors.blue;
-    if (status == 'cancelled' || status == 'rejected') themeColor = Colors.red;
-    if (status == 'completed') themeColor = Colors.grey;
+    if (status == 'cancelled' || status == 'rejected') themeColor = Colors.grey;
+    if (status == 'completed') themeColor = Colors.green;
 
     return ClipPath(
       clipper: TicketClipper(),
@@ -417,10 +417,12 @@ class _SimpleTicketItemState extends State<SimpleTicketItem>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(widget.data['spaceName'] ?? 'SPACE TICKET',
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          fontFamily: 'manru'),
+                          fontFamily: 'manru',
+                          color: isCancelled ? Colors.grey : Colors.black,
+                          ),                          
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis),
                   const SizedBox(height: 8),
@@ -448,7 +450,7 @@ class _SimpleTicketItemState extends State<SimpleTicketItem>
                                   width: index % 3 == 0 ? 1 : 3,
                                   height: 24,
                                   margin: const EdgeInsets.only(right: 3),
-                                  color: Colors.black87))),
+                                  color: isCancelled ? Colors.grey : Colors.black87))),
                       Text(
                           "NO. ${widget.data['docId'].substring(0, 4).toUpperCase()}",
                           style: const TextStyle(
