@@ -4,7 +4,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:math' as math;
 
-import 'reservation_detail_screen.dart';
 import 'login_screen.dart';
 
 class MyHistoryScreen extends StatefulWidget {
@@ -45,22 +44,21 @@ class _MyHistoryScreenState extends State<MyHistoryScreen>
     }
   }
 
-  // 🛠 [수정됨] 로그아웃 다이얼로그 (더 날씬하고 이쁘게)
+  // 로그아웃 다이얼로그
   void _showLogoutDialog() {
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          backgroundColor: Colors.white, // 깔끔한 흰색 배경
-          surfaceTintColor: Colors.transparent, // 머티리얼3 틴트 제거
-          // 🌟 [핵심] 좌우 여백을 많이 줘서 창을 '날씬하게' 만듦
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.transparent,
           insetPadding: const EdgeInsets.symmetric(horizontal: 90),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20), // 둥근 모서리
+            borderRadius: BorderRadius.circular(20),
           ),
           title: const Column(
             children: [
-              Icon(Icons.logout_rounded, color: Colors.red, size: 30), // 아이콘 추가
+              Icon(Icons.logout_rounded, color: Colors.red, size: 30),
               SizedBox(height: 10),
               Text(
                 "로그아웃",
@@ -74,19 +72,18 @@ class _MyHistoryScreenState extends State<MyHistoryScreen>
             ],
           ),
           content: const Text(
-            "정말 로그아웃\n하시겠습니까?", // 줄바꿈으로 더 컴팩트하게
-            textAlign: TextAlign.center, // 가운데 정렬
+            "정말 로그아웃\n하시겠습니까?",
+            textAlign: TextAlign.center,
             style: TextStyle(
               fontFamily: 'manru',
               fontSize: 14,
               color: Colors.grey,
             ),
           ),
-          actionsAlignment: MainAxisAlignment.spaceEvenly, // 버튼 간격 균등하게
+          actionsAlignment: MainAxisAlignment.spaceEvenly,
           actionsPadding:
               const EdgeInsets.only(bottom: 20, left: 10, right: 10),
           actions: [
-            // 취소 버튼
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
@@ -96,11 +93,10 @@ class _MyHistoryScreenState extends State<MyHistoryScreen>
               ),
               child: const Text("취소"),
             ),
-            // 확인 버튼 (빨간색 강조)
             ElevatedButton(
               onPressed: () async {
-                Navigator.pop(context); // 팝업 닫기
-                await FirebaseAuth.instance.signOut(); // 로그아웃
+                Navigator.pop(context);
+                await FirebaseAuth.instance.signOut();
 
                 if (mounted) {
                   Navigator.pushReplacement(
@@ -150,11 +146,9 @@ class _MyHistoryScreenState extends State<MyHistoryScreen>
         backgroundColor: _backgroundColor,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.black),
-        // 🛠 [수정됨] 로그아웃 버튼 색상 빨간색으로 변경
         actions: [
           IconButton(
             onPressed: _showLogoutDialog,
-            // 🌟 색상을 빨간색(Colors.red)으로 변경
             icon: const Icon(Icons.logout_rounded, color: Colors.red),
             tooltip: '로그아웃',
           ),
@@ -217,7 +211,10 @@ class _MyHistoryScreenState extends State<MyHistoryScreen>
         return Container(
           color: _backgroundColor,
           child: ListView.separated(
-            physics: const ClampingScrollPhysics(),
+            // 🛠 [수정됨] ClampingScrollPhysics -> AlwaysScrollableScrollPhysics
+            // Clamping은 스크롤 끝에서 강제로 멈추는데, 리스트가 길어지면 렌더링 오류가 발생할 수 있습니다.
+            // AlwaysScrollableScrollPhysics는 부드러운 스크롤을 보장하며 오류를 방지합니다.
+            physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
             itemCount: docs.length,
             separatorBuilder: (context, index) => const SizedBox(height: 16),
