@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'providers/user_provider.dart';
-import 'firebase_options.dart'; // flutterfire configure가 생성한 파일
+// flutterfire configure가 생성한 파일
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'screens/splash_screen.dart'; // 스플래시
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   // Firebase가 네이티브 코드를 먼저 초기화
