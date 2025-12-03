@@ -60,7 +60,7 @@ class _ReservationDetailScreenState extends State<ReservationDetailScreen> {
         });
       }
     } catch (e) {
-      print(e);
+      debugPrint('리뷰 확인 에러: $e');
     }
   }
 
@@ -70,7 +70,44 @@ class _ReservationDetailScreenState extends State<ReservationDetailScreen> {
   }
 
   Future<void> _deleteReview() async {
-    // ... (기존 로직 동일)
+    // 1. 문서 ID가 없으면 삭제 불가 (방어 코드)
+    if (_reviewDocId == null) return;
+
+    setState(() {
+      // _isLoading = true; // (선택사항) 로딩 시작
+    });
+
+    try {
+      // 2. 파이어베이스에서 해당 리뷰 삭제 (여기서 _reviewDocId가 사용됨! ✅)
+      await _firestore.collection('reviews').doc(_reviewDocId).delete();
+
+      // 3. 화면 상태 초기화 (리뷰 안 쓴 상태로 되돌리기)
+      setState(() {
+        _hasReview = false;
+        _reviewDocId = null;
+        _reviewController.clear();
+        _currentRating = 5;
+      });
+
+      // 4. 안내 메시지
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("리뷰가 삭제되었습니다.")),
+        );
+      }
+    } catch (e) {
+      debugPrint("리뷰 삭제 실패: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("오류가 발생했습니다.")),
+        );
+      }
+    } finally {
+      /* setState(() {
+        _isLoading = false; // 로딩 끝
+      }); 
+      */
+    }
   }
 
   // Helper 함수들
@@ -152,7 +189,7 @@ class _ReservationDetailScreenState extends State<ReservationDetailScreen> {
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                             color:
-                                getStatusColor(currentStatus).withOpacity(0.1),
+                                getStatusColor(currentStatus).withValues(alpha: 0.1),
                             shape: BoxShape.circle),
                         child: Icon(
                           currentStatus == 'confirmed'
@@ -242,46 +279,64 @@ class _ReservationDetailScreenState extends State<ReservationDetailScreen> {
                           fontWeight: FontWeight.bold,
                           letterSpacing: 1.5)),
                   const SizedBox(height: 12),
+                  
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.1), // 반투명
+                        color: Colors.white.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: Colors.white24)),
-                    child: Column(
+                    child: _isLoading 
+                      ? const Center(child: CircularProgressIndicator()) // 로딩 중일 때
+                      : Column(
                       children: [
+                        // 1. 별점 표시
                         Row(
                             mainAxisAlignment: MainAxisAlignment.center,
-                            children:
-                                List.generate(5, (index) => _buildStar(index))),
+                            children: List.generate(5, (index) => _buildStar(index))
+                        ),
                         const SizedBox(height: 16),
+
+                        // 2. 리뷰 작성 칸 vs 이미 쓴 리뷰 내용 ( _hasReview 변수 사용! )
                         TextField(
                           controller: _reviewController,
                           style: const TextStyle(color: Colors.white),
                           maxLines: 3,
-                          decoration: const InputDecoration(
-                            hintText: "상세한 이용 후기를 남겨주세요.",
-                            hintStyle: TextStyle(color: Colors.white54),
-                            enabledBorder: OutlineInputBorder(
+                          // 리뷰가 이미 있으면 수정 못하게 막기 (읽기 전용)
+                          readOnly: _hasReview, 
+                          decoration: InputDecoration(
+                            hintText: _hasReview ? "작성한 리뷰가 없습니다." : "상세한 이용 후기를 남겨주세요.",
+                            hintStyle: const TextStyle(color: Colors.white54),
+                            enabledBorder: const OutlineInputBorder(
                                 borderSide: BorderSide(color: Colors.white24)),
-                            focusedBorder: OutlineInputBorder(
+                            focusedBorder: const OutlineInputBorder(
                                 borderSide: BorderSide(color: Colors.blue)),
                           ),
                         ),
                         const SizedBox(height: 16),
+
+                        // 3. 버튼 (저장 vs 삭제) - ( _deleteReview 함수 사용! )
                         SizedBox(
                           width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: _submitReview,
-                            style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.blue,
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 16)),
-                            child: const Text("리뷰 저장",
-                                style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold)),
-                          ),
+                          child: _hasReview
+                              ? OutlinedButton( // 이미 리뷰가 있으면 '삭제' 버튼 표시
+                                  onPressed: _deleteReview,
+                                  style: OutlinedButton.styleFrom(
+                                      foregroundColor: Colors.red[300],
+                                      side: BorderSide(color: Colors.red[300]!),
+                                      padding: const EdgeInsets.symmetric(vertical: 16)),
+                                  child: const Text("내 리뷰 삭제하기"),
+                                )
+                              : ElevatedButton( // 리뷰가 없으면 '저장' 버튼 표시
+                                  onPressed: _submitReview,
+                                  style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.blue,
+                                      padding: const EdgeInsets.symmetric(vertical: 16)),
+                                  child: const Text("리뷰 저장",
+                                      style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold)),
+                                ),
                         )
                       ],
                     ),
