@@ -31,9 +31,10 @@ class _ReviewWriteScreenState extends State<ReviewWriteScreen> {
     final userProvider = context.read<UserProvider>();
     final user = userProvider.currentUser;
     if (user == null) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(const SnackBar(content: Text("로그인 정보 오류.")));
+      }
       setState(() => _isSubmitting = false);
       return;
     }
@@ -63,9 +64,10 @@ class _ReviewWriteScreenState extends State<ReviewWriteScreen> {
         Navigator.pop(context);
       }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text("오류 발생: $e")));
+      }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -117,7 +119,7 @@ class _ReviewWriteScreenState extends State<ReviewWriteScreen> {
             ),
             const SizedBox(height: 30),
 
-            // 리뷰 내용 입력
+            // 리뷰 내용
             TextField(
               controller: _contentController,
               maxLines: 5,
