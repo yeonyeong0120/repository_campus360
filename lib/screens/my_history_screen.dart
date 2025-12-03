@@ -146,8 +146,10 @@ class _MyHistoryScreenState extends State<MyHistoryScreen>
           .where('status', isEqualTo: 'completed')
           .snapshots(),
       builder: (context, snapshot) {
-        if (!snapshot.hasData)
+        if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
+        }
+        final docs = snapshot.data!.docs;
 
         final docs = List.of(snapshot.data!.docs);
         if (docs.isEmpty) {
@@ -198,10 +200,34 @@ class SimpleTicketItem extends StatelessWidget {
   const SimpleTicketItem({super.key, required this.data});
 
   @override
-  Widget build(BuildContext context) {
-    final status = data['status'];
-    Color statusColor = Colors.black;
-    String statusText = "";
+  void initState() {
+    super.initState();
+    _flipController = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 600));
+    _animation = Tween<double>(begin: 0, end: 1).animate(
+        CurvedAnimation(parent: _flipController, curve: Curves.easeInOutBack));
+  }
+
+  @override
+  void dispose() {
+    _flipController.dispose();
+    super.dispose();
+  }
+
+  void _flipCard() {
+    if (_isFront) {
+      _flipController.forward();
+    } else {
+      _flipController.reverse();
+    }
+    setState(() => _isFront = !_isFront);
+  }
+
+  void _onTicketTap() {
+    final status = widget.data['status'];
+
+    // 🌟 [핵심] 취소된 예약은 아예 무반응 (Return)
+    if (status == 'cancelled' || status == 'rejected') return;
 
     if (status == 'pending') {
       statusColor = Colors.orange;
@@ -216,18 +242,182 @@ class SimpleTicketItem extends StatelessWidget {
       statusColor = Colors.grey;
       statusText = "취소됨";
     }
+  }
+
+  // 예약 취소 로직
+  Future<void> _cancelReservation() async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('reservations')
+          .doc(widget.data['docId'])
+          .update({'status': 'cancelled'});
+      if (!mounted) return;
+      _flipCard(); // 다시 앞면으로
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text("오류: $e")));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final status = widget.data['status'];
+    final bool isCancelled = (status == 'cancelled' || status == 'rejected');
 
     return GestureDetector(
-      onTap: () {
-        // 🌟 여기가 에러가 나던 부분입니다.
-        // 이제 import가 되어 있으므로 에러 없이 이동합니다.
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ReservationDetailScreen(reservation: data),
+      onTap: _onTicketTap,
+      child: AnimatedBuilder(
+        animation: _animation,
+        builder: (context, child) {
+          final angle = _animation.value * math.pi;
+          final transform = Matrix4.identity()
+            ..setEntry(3, 2, 0.001)
+            ..rotateY(angle);
+          return Transform(
+            transform: transform,
+            alignment: Alignment.center,
+            child: _animation.value < 0.5
+                ? _buildFrontSide(status, isCancelled)
+                : Transform(
+                    transform: Matrix4.identity()..rotateY(math.pi),
+                    alignment: Alignment.center,
+                    child: _buildBackSide(),
+                  ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildFrontSide(String? status, bool isCancelled) {
+    Color themeColor = Colors.black;
+    if (status == 'pending') themeColor = Colors.orange;
+    if (status == 'confirmed') themeColor = Colors.blue;
+    if (status == 'cancelled' || status == 'rejected') themeColor = Colors.red;
+    if (status == 'completed') themeColor = Colors.grey;
+
+    return ColorFiltered(
+      colorFilter: isCancelled
+          ? const ColorFilter.mode(Colors.grey, BlendMode.saturation)
+          : const ColorFilter.mode(Colors.transparent, BlendMode.multiply),
+      child: ClipPath(
+        clipper: TicketClipper(),
+        child: Container(
+          height: 190,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.08),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4))
+            ],
           ),
-        );
-      },
+          child: Stack(
+            children: [
+              Positioned(
+                  left: 0,
+                  top: 0,
+                  bottom: 0,
+                  child: Container(width: 8, color: themeColor)),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(28, 20, 20, 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(widget.data['spaceName'] ?? 'SPACE TICKET',
+                        style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'manru'),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis),
+                    const SizedBox(height: 8),
+                    Text("${widget.data['date']} | ${widget.data['timeSlot']}",
+                        style:
+                            TextStyle(color: Colors.grey[600], fontSize: 14)),
+                    const Spacer(),
+                    Row(
+                        children: List.generate(
+                            30,
+                            (index) => Expanded(
+                                child: Container(
+                                    color: index % 2 == 0
+                                        ? Colors.transparent
+                                        : Colors.grey[300],
+                                    height: 1)))),
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                            children: List.generate(
+                                16,
+                                (index) => Container(
+                                    width: index % 3 == 0 ? 1 : 3,
+                                    height: 24,
+                                    margin: const EdgeInsets.only(right: 3),
+                                    color: Colors.black87))),
+                        Text(
+                            "NO. ${widget.data['docId'].substring(0, 4).toUpperCase()}",
+                            style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey)),
+                      ],
+                    )
+                  ],
+                ),
+              ),
+              if (status != 'pending')
+                Positioned(
+                  top: 50,
+                  right: 40,
+                  child: Transform.rotate(
+                    angle: -0.3,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                          border: Border.all(
+                              color: themeColor.withValues(alpha: .5), width: 3),
+                          borderRadius: BorderRadius.circular(8)),
+                      child: Text(
+                        status == 'confirmed'
+                            ? "CONFIRMED"
+                            : status == 'completed'
+                                ? "USED"
+                                : "CANCELLED",
+                        style: TextStyle(
+                            color: themeColor.withValues(alpha: 0.7),
+                            fontWeight: FontWeight.w900,
+                            fontSize: 16,
+                            letterSpacing: 1.5),
+                      ),
+                    ),
+                  ),
+                ),
+              if (status == 'pending')
+                Positioned(
+                    bottom: 10,
+                    right: 10,
+                    child: Row(children: [
+                      Text("터치하여 취소 >",
+                          style: TextStyle(fontSize: 10, color: Colors.grey))
+                    ]))
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // 뒷면: 예약 취소 버튼
+  Widget _buildBackSide() {
+    return ClipPath(
+      clipper: TicketClipper(),
       child: Container(
         height: 120, // 높이 고정으로 깔끔하게
         padding: const EdgeInsets.all(20),
@@ -347,7 +537,7 @@ class _ReviewActionItemState extends State<ReviewActionItem> {
             border: Border.all(color: Colors.black12),
             boxShadow: [
               BoxShadow(
-                  color: Colors.grey.withValues(alpha: 0.1), // withValues
+                  color: Colors.grey.withValues(alpha: 0.1),
                   blurRadius: 6,
                   offset: const Offset(2, 4))
             ],
@@ -362,7 +552,7 @@ class _ReviewActionItemState extends State<ReviewActionItem> {
                 decoration: BoxDecoration(
                   color: hasReview
                       ? const Color(0xFFFFF176)
-                      : Colors.blue.withValues(alpha: 0.1), // withValues
+                      : Colors.blue.withValues(alpha: 0.1),
                   borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(16),
                       topRight: Radius.circular(16)),
