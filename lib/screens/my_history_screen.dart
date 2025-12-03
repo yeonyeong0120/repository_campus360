@@ -48,7 +48,7 @@ class _MyHistoryScreenState extends State<MyHistoryScreen>
   void _showLogoutDialog() {
     showDialog(
       context: context,
-      builder: (context) {
+      builder: (dialogContext) {
         return AlertDialog(
           backgroundColor: Colors.white,
           surfaceTintColor: Colors.transparent,
@@ -86,7 +86,7 @@ class _MyHistoryScreenState extends State<MyHistoryScreen>
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.pop(context);
+                Navigator.pop(dialogContext);
               },
               style: TextButton.styleFrom(
                 foregroundColor: Colors.grey,
@@ -95,12 +95,12 @@ class _MyHistoryScreenState extends State<MyHistoryScreen>
             ),
             ElevatedButton(
               onPressed: () async {
-                Navigator.pop(context);
+                Navigator.pop(dialogContext);
                 await FirebaseAuth.instance.signOut();
 
                 if (mounted) {
                   Navigator.pushReplacement(
-                    context,
+                    context, 
                     MaterialPageRoute(builder: (_) => const LoginScreen()),
                   );
                 }
@@ -382,125 +382,123 @@ class _SimpleTicketItemState extends State<SimpleTicketItem>
   }
 
   Widget _buildFrontSide(String? status, bool isCancelled) {
+
+    // 색상 로직은 여기서 설정
     Color themeColor = Colors.black;
     if (status == 'pending') themeColor = Colors.orange;
     if (status == 'confirmed') themeColor = Colors.blue;
     if (status == 'cancelled' || status == 'rejected') themeColor = Colors.red;
     if (status == 'completed') themeColor = Colors.grey;
 
-    return ColorFiltered(
-      colorFilter: isCancelled
-          ? const ColorFilter.mode(Colors.grey, BlendMode.saturation)
-          : const ColorFilter.mode(Colors.transparent, BlendMode.multiply),
-      child: ClipPath(
-        clipper: TicketClipper(),
-        child: Container(
-          height: 190,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.08),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4))
-            ],
-          ),
-          child: Stack(
-            children: [
-              Positioned(
-                  left: 0,
-                  top: 0,
-                  bottom: 0,
-                  child: Container(width: 8, color: themeColor)),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(28, 20, 20, 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(widget.data['spaceName'] ?? 'SPACE TICKET',
-                        style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'manru'),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis),
-                    const SizedBox(height: 8),
-                    Text("${widget.data['date']} | ${widget.data['timeSlot']}",
-                        style:
-                            TextStyle(color: Colors.grey[600], fontSize: 14)),
-                    const Spacer(),
-                    Row(
-                        children: List.generate(
-                            30,
-                            (index) => Expanded(
-                                child: Container(
-                                    color: index % 2 == 0
-                                        ? Colors.transparent
-                                        : Colors.grey[300],
-                                    height: 1)))),
-                    const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                            children: List.generate(
-                                16,
-                                (index) => Container(
-                                    width: index % 3 == 0 ? 1 : 3,
-                                    height: 24,
-                                    margin: const EdgeInsets.only(right: 3),
-                                    color: Colors.black87))),
-                        Text(
-                            "NO. ${widget.data['docId'].substring(0, 4).toUpperCase()}",
-                            style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.grey)),
-                      ],
-                    )
-                  ],
-                ),
+    return ClipPath(
+      clipper: TicketClipper(),
+      child: Container(
+        height: 190,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+                color: Colors.black.withValues(alpha: 0.08),
+                blurRadius: 8,
+                offset: const Offset(0, 4))
+          ],
+        ),
+        child: Stack(
+          children: [
+            Positioned(
+                left: 0,
+                top: 0,
+                bottom: 0,
+                child: Container(width: 8, color: themeColor)),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(28, 20, 20, 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(widget.data['spaceName'] ?? 'SPACE TICKET',
+                      style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'manru'),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis),
+                  const SizedBox(height: 8),
+                  Text("${widget.data['date']} | ${widget.data['timeSlot']}",
+                      style:
+                          TextStyle(color: Colors.grey[600], fontSize: 14)),
+                  const Spacer(),
+                  Row(
+                      children: List.generate(
+                          30,
+                          (index) => Expanded(
+                              child: Container(
+                                  color: index % 2 == 0
+                                      ? Colors.transparent
+                                      : Colors.grey[300],
+                                  height: 1)))),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                          children: List.generate(
+                              16,
+                              (index) => Container(
+                                  width: index % 3 == 0 ? 1 : 3,
+                                  height: 24,
+                                  margin: const EdgeInsets.only(right: 3),
+                                  color: Colors.black87))),
+                      Text(
+                          "NO. ${widget.data['docId'].substring(0, 4).toUpperCase()}",
+                          style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey)),
+                    ],
+                  )
+                ],
               ),
-              if (status != 'pending')
-                Positioned(
-                  top: 50,
-                  right: 40,
-                  child: Transform.rotate(
-                    angle: -0.3,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 6),
-                      decoration: BoxDecoration(
-                          border: Border.all(
-                              color: themeColor.withValues(alpha: .5),
-                              width: 3),
-                          borderRadius: BorderRadius.circular(8)),
-                      child: Text(
-                        status == 'confirmed'
-                            ? "CONFIRMED"
-                            : status == 'completed'
-                                ? "USED"
-                                : "CANCELLED",
-                        style: TextStyle(
-                            color: themeColor.withValues(alpha: 0.7),
-                            fontWeight: FontWeight.w900,
-                            fontSize: 16,
-                            letterSpacing: 1.5),
-                      ),
+            ),
+            if (status != 'pending')
+              Positioned(
+                top: 50,
+                right: 40,
+                child: Transform.rotate(
+                  angle: -0.3,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                        border: Border.all(
+                            color: themeColor.withValues(alpha: .5),
+                            width: 3),
+                        borderRadius: BorderRadius.circular(8)),
+                    child: Text(
+                      status == 'confirmed'
+                          ? "CONFIRMED"
+                          : status == 'completed'
+                              ? "USED"
+                              : "CANCELLED",
+                      style: TextStyle(
+                          color: themeColor.withValues(alpha: 0.7),
+                          fontWeight: FontWeight.w900,
+                          fontSize: 16,
+                          letterSpacing: 1.5),
                     ),
                   ),
                 ),
-              if (status == 'pending')
-                Positioned(
-                    bottom: 10,
-                    right: 10,
-                    child: Row(children: const [
-                      Text("터치하여 취소 >",
-                          style: TextStyle(fontSize: 10, color: Colors.grey))
-                    ]))
-            ],
-          ),
+              ),
+            // 댜기 상태에서 취소할때
+            if (status == 'pending')
+              Positioned(
+                  bottom: 10,
+                  right: 10,
+                  child: Row(children: const [
+                    Text("터치하여 취소 >",
+                        style: TextStyle(fontSize: 10, color: Colors.grey))
+                  ]))
+          ],
         ),
       ),
     );
