@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:repository_campus360/screens/reservation_detail_screen.dart'; // 예약 상세 이동용
 import 'dart:math' as math; // 3D 회전 효과를 위해 필요
@@ -47,8 +46,9 @@ class _MyHistoryScreenState extends State<MyHistoryScreen>
   @override
   Widget build(BuildContext context) {
     final User? user = FirebaseAuth.instance.currentUser;
-    if (user == null)
+    if (user == null) {
       return const Scaffold(body: Center(child: Text("로그인이 필요합니다.")));
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFFF0F2F5), // 배경을 조금 더 짙게 하여 흰색 티켓 강조
@@ -88,11 +88,13 @@ class _MyHistoryScreenState extends State<MyHistoryScreen>
           .where('userId', isEqualTo: uid)
           .snapshots(),
       builder: (context, snapshot) {
-        if (!snapshot.hasData)
+        if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
-        if (snapshot.data!.docs.isEmpty)
+        }
+        if (snapshot.data!.docs.isEmpty) {
           return _buildEmptyState("발급된 티켓이 없습니다.\n예약을 통해 티켓을 수집해보세요!",
               Icons.local_activity_outlined);
+        }
 
         _checkAndCompleteReservations(snapshot.data!.docs);
         final docs = snapshot.data!.docs;
@@ -140,12 +142,14 @@ class _MyHistoryScreenState extends State<MyHistoryScreen>
           .where('userId', isEqualTo: uid)
           .snapshots(),
       builder: (context, snapshot) {
-        if (!snapshot.hasData)
+        if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
+        }
         final docs = snapshot.data!.docs;
-        if (docs.isEmpty)
+        if (docs.isEmpty) {
           return _buildEmptyState(
               "작성한 리뷰 기록이 없습니다.", Icons.rate_review_outlined);
+        }
 
         docs.sort((a, b) {
           var aTime = a['createdAt'] as Timestamp?;

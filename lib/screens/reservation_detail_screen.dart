@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class ReservationDetailScreen extends StatefulWidget {
@@ -20,7 +19,7 @@ class _ReservationDetailScreenState extends State<ReservationDetailScreen> {
   final User? currentUser = FirebaseAuth.instance.currentUser;
 
   int _currentRating = 5;
-  bool _isLoading = false;
+  final bool _isLoading = false;
   bool _hasReview = false;
   String? _reviewDocId;
 
@@ -107,13 +106,15 @@ class _ReservationDetailScreenState extends State<ReservationDetailScreen> {
           .doc(widget.reservation['docId'])
           .snapshots(),
       builder: (context, snapshot) {
-        if (!snapshot.hasData)
+        if (!snapshot.hasData) {
           return const Scaffold(
               body: Center(child: CircularProgressIndicator()));
+        }
 
         final data = snapshot.data!.data() as Map<String, dynamic>?;
-        if (data == null)
+        if (data == null) {
           return const Scaffold(body: Center(child: Text("데이터 없음")));
+        }
 
         final currentStatus = data['status'] ?? 'pending';
 
