@@ -7,7 +7,6 @@ import 'package:repository_campus360/consts/campus_markers.dart';
 import 'search_screen.dart'; // 검색결과랑 연결
 import 'detail_screen.dart'; // 🌟 [필수] 상세 화면 연결
 
-
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
 
@@ -41,22 +40,18 @@ class _MapScreenState extends State<MapScreen> {
   void _createMarkers() {
     // 1. 일반 건물 마커들 (campusMarkerData 리스트를 반복해서 마커로 변환)
     final buildingMarkers = campusMarkerData.map((info) {
-
       final bool isGreen = ['학교 정문', '폴90도 (카페)'].contains(info.title);
-      final bool isNonClickable = [
-        '학교 정문', 
-        '폴90도 (카페)', 
-        '역사관'
-      ].contains(info.title);
+      final bool isNonClickable =
+          ['학교 정문', '폴90도 (카페)', '역사관'].contains(info.title);
 
       return Marker(
         markerId: MarkerId(info.id),
         position: info.position,
         infoWindow: InfoWindow(title: info.title),
-        icon: isGreen 
-            ? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen) 
+        icon: isGreen
+            ? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen)
             : BitmapDescriptor.defaultMarker,
-            
+
         // 🚫 조건에 따라 클릭 이벤트 끄기 (null이면 아무 동작 안 함)
         onTap: isNonClickable ? null : () => _showBuildingDetail(info.title),
       );
@@ -110,7 +105,10 @@ class _MapScreenState extends State<MapScreen> {
               backgroundColor: Colors.white,
               foregroundColor: Colors.blue,
               onPressed: _goToSchoolCenter,
-              child: const Icon(Icons.center_focus_strong, size: 30,),
+              child: const Icon(
+                Icons.center_focus_strong,
+                size: 30,
+              ),
             ),
           ),
         ],
@@ -126,7 +124,91 @@ class _MapScreenState extends State<MapScreen> {
 
   // 👇 기존 로직 그대로 유지 (바텀 시트) 👇
   void _showBuildingDetail(String buildingName) {
-    final floors = buildingData[buildingName] ?? [];
+    // 🌟 [데이터] 사용자님께서 요청하신 모든 기술관 데이터 적용
+    final Map<String, List<Map<String, dynamic>>> localBuildingData = {
+      "하이테크관": [
+        {
+          'floor': '3F',
+          'rooms': ['디지털데이터활용실습실', '강의실 2']
+        },
+        {
+          'floor': '2F',
+          'rooms': ['컨퍼런스룸']
+        },
+      ],
+      "1기술관": [
+        {
+          'floor': '2F',
+          'rooms': ['CAD실습실', '콘트롤러실습실']
+        },
+      ],
+      "2기술관": [
+        {
+          'floor': '3F',
+          'rooms': ['자동차과이론강의실', 'PLC실습실']
+        },
+        {
+          'floor': '2F',
+          'rooms': ['자동차과이론강의실', 'CAD/CAE실']
+        },
+        {
+          'floor': '1F',
+          'rooms': ['CATIA실습실', '전기자동차실습실', '자동차과이론강의실']
+        },
+      ],
+      "3기술관": [
+        {
+          'floor': '1F',
+          'rooms': ['아이디어 존']
+        },
+      ],
+      "5기술관": [
+        {
+          'floor': '4F',
+          'rooms': [
+            '시제품창의개발실',
+            '아이디어카페',
+            '디자인워크샵실습실',
+            '융합디자인실습실',
+            '디지털디자인실습실',
+            '미디어창작실습실'
+          ]
+        },
+        {
+          'floor': '3F',
+          'rooms': ['강의실', '스터디룸', '반도체제어실', '전자CAD실', '기초전자실습실']
+        },
+        {
+          'floor': '2F',
+          'rooms': ['AI융합프로젝트실습실', '인공지능프로그래밍실습실', 'ioT제어실습실']
+        },
+        {
+          'floor': '1F',
+          'rooms': ['개인미디어실', '세미나실', '미디어편집실', 'AR그래픽실', '실감형콘텐츠운영실습실']
+        },
+      ],
+      "6기술관": [
+        {
+          'floor': '1F',
+          'rooms': ['건축설계과']
+        },
+      ],
+      "7기술관": [
+        {
+          'floor': '3F',
+          'rooms': ['소그룹실', '강의실', '반도체 시스템 제작실']
+        },
+      ],
+      "대학 본관": [
+        {
+          'floor': '1F',
+          'rooms': ['로비', '행정실']
+        },
+      ],
+    };
+
+    // 맵 데이터 가져오기
+    final floors = localBuildingData[buildingName] ?? [];
 
     showModalBottomSheet(
       context: context,
@@ -149,27 +231,32 @@ class _MapScreenState extends State<MapScreen> {
                       style: const TextStyle(
                           fontSize: 22, fontWeight: FontWeight.bold)),
                   IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.pop(context)),
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                  ),
                 ],
               ),
               const Divider(),
               const SizedBox(height: 10),
+
               const Text("추천 강의실",
                   style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: Colors.grey)),
+
+              // 🌟 [수정] 층별 데이터가 없으면 안내 문구 표시
               if (floors.isEmpty)
                 const Padding(
                   padding: EdgeInsets.all(20),
                   child: Center(child: Text("등록된 강의실 정보가 없습니다.")),
                 )
               else
+                // 🌟 [수정] 각 층의 대표(첫 번째) 강의실을 리스트로 표시
                 ...floors.map((floorData) {
                   final floor = floorData['floor'] as String;
                   final rooms = floorData['rooms'] as List<String>;
-                  final recommendedRoom = rooms.first;
+                  final recommendedRoom = rooms.first; // 첫 번째 방을 추천
 
                   return ListTile(
                     contentPadding: EdgeInsets.zero,
@@ -185,13 +272,16 @@ class _MapScreenState extends State<MapScreen> {
                     trailing: const Icon(Icons.arrow_forward_ios,
                         size: 14, color: Colors.grey),
                     onTap: () {
+                      // 🌟 [수정] 추천 강의실 클릭 -> DetailScreen (상세 정보) 이동
                       Navigator.pop(context);
-                      // 상세 페이지 이동 로직 (기존과 동일)
+
+                      // DetailScreen으로 넘길 데이터 (DB 조회 전 임시 데이터 구조)
                       final spaceData = {
                         'name': recommendedRoom,
                         'location': '$buildingName $floor',
                         'capacity': '정보 없음',
                       };
+
                       Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -199,7 +289,10 @@ class _MapScreenState extends State<MapScreen> {
                     },
                   );
                 }),
+
               const SizedBox(height: 20),
+
+              // 🌟 [수정] 전체 보기 클릭 -> SearchScreen (목록/검색) 이동
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -212,9 +305,10 @@ class _MapScreenState extends State<MapScreen> {
                                 SearchScreen(initialQuery: buildingName)));
                   },
                   style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 15)),
+                    backgroundColor: Colors.blue,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                  ),
                   child: Text("$buildingName 전체 공간 보기"),
                 ),
               ),
