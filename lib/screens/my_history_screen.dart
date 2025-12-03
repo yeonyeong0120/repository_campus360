@@ -1,9 +1,11 @@
+// lib/screens/my_history_screen.dart
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:math' as math;
 
 import 'reservation_detail_screen.dart';
+import 'login_screen.dart';
 
 class MyHistoryScreen extends StatefulWidget {
   const MyHistoryScreen({super.key});
@@ -43,6 +45,90 @@ class _MyHistoryScreenState extends State<MyHistoryScreen>
     }
   }
 
+  // 🛠 [수정됨] 로그아웃 다이얼로그 (더 날씬하고 이쁘게)
+  void _showLogoutDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.white, // 깔끔한 흰색 배경
+          surfaceTintColor: Colors.transparent, // 머티리얼3 틴트 제거
+          // 🌟 [핵심] 좌우 여백을 많이 줘서 창을 '날씬하게' 만듦
+          insetPadding: const EdgeInsets.symmetric(horizontal: 90),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20), // 둥근 모서리
+          ),
+          title: const Column(
+            children: [
+              Icon(Icons.logout_rounded, color: Colors.red, size: 30), // 아이콘 추가
+              SizedBox(height: 10),
+              Text(
+                "로그아웃",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'manru',
+                  fontSize: 18,
+                ),
+              ),
+            ],
+          ),
+          content: const Text(
+            "정말 로그아웃\n하시겠습니까?", // 줄바꿈으로 더 컴팩트하게
+            textAlign: TextAlign.center, // 가운데 정렬
+            style: TextStyle(
+              fontFamily: 'manru',
+              fontSize: 14,
+              color: Colors.grey,
+            ),
+          ),
+          actionsAlignment: MainAxisAlignment.spaceEvenly, // 버튼 간격 균등하게
+          actionsPadding:
+              const EdgeInsets.only(bottom: 20, left: 10, right: 10),
+          actions: [
+            // 취소 버튼
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.grey,
+              ),
+              child: const Text("취소"),
+            ),
+            // 확인 버튼 (빨간색 강조)
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.pop(context); // 팝업 닫기
+                await FirebaseAuth.instance.signOut(); // 로그아웃
+
+                if (mounted) {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (_) => const LoginScreen()),
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text(
+                "네",
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final User? user = FirebaseAuth.instance.currentUser;
@@ -64,6 +150,15 @@ class _MyHistoryScreenState extends State<MyHistoryScreen>
         backgroundColor: _backgroundColor,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.black),
+        // 🛠 [수정됨] 로그아웃 버튼 색상 빨간색으로 변경
+        actions: [
+          IconButton(
+            onPressed: _showLogoutDialog,
+            // 🌟 색상을 빨간색(Colors.red)으로 변경
+            icon: const Icon(Icons.logout_rounded, color: Colors.red),
+            tooltip: '로그아웃',
+          ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           labelColor: Colors.black,
