@@ -173,7 +173,7 @@ class _MyHistoryScreenState extends State<MyHistoryScreen>
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                      color: Colors.blue.withOpacity(0.05),
+                      color: Colors.blue.withValues(alpha: 0.05),
                       blurRadius: 15,
                       offset: const Offset(0, 8)),
                 ],
@@ -313,7 +313,7 @@ class _TicketItemState extends State<TicketItem>
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: 0.1),
                   blurRadius: 10,
                   offset: const Offset(0, 5))
             ],
@@ -351,7 +351,7 @@ class _TicketItemState extends State<TicketItem>
                         ),
                         // 우측 상단 로고 느낌
                         Icon(Icons.airplane_ticket,
-                            color: themeColor.withOpacity(0.3)),
+                            color: themeColor.withValues(alpha: .3)),
                       ],
                     ),
                     const SizedBox(height: 8),
@@ -408,7 +408,7 @@ class _TicketItemState extends State<TicketItem>
                         border: Border.all(
                             color: status == 'completed'
                                 ? Colors.grey
-                                : Colors.red.withOpacity(0.7),
+                                : Colors.red.withValues(alpha: 0.7),
                             width: 3),
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -417,7 +417,7 @@ class _TicketItemState extends State<TicketItem>
                         style: TextStyle(
                             color: status == 'completed'
                                 ? Colors.grey
-                                : Colors.red.withOpacity(0.7),
+                                : Colors.red.withValues(alpha: .7),
                             fontWeight: FontWeight.w900,
                             fontSize: 16,
                             letterSpacing: 2),
