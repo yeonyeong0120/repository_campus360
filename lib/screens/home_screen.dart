@@ -3,7 +3,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart'; // 🌟 DB 사용을 위해 필수
-import 'package:intl/intl.dart'; // 날짜 포맷을 위해 필요 (없으면 pubspec.yaml에 intl 추가 권장, 없으면 기본 포맷 사용)
+// 날짜 포맷을 위해 필요 (없으면 pubspec.yaml에 intl 추가 권장, 없으면 기본 포맷 사용)
 
 import 'package:repository_campus360/screens/chatbot_sheet.dart';
 import 'detail_screen.dart';

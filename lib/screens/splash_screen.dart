@@ -23,11 +23,124 @@ class _SplashScreenState extends State<SplashScreen> {
     _checkLoginStatus();
   }
 
+  // ---------------------------------------------------------------------------
+  // 💾 [데이터 업로드 함수]
+  // ---------------------------------------------------------------------------
+  Future<void> _uploadInitialData() async {
+    final batch = FirebaseFirestore.instance.batch();
+    final spacesCollection = FirebaseFirestore.instance.collection('spaces');
+
+    const Map<String, List<Map<String, dynamic>>> initialData = {
+      "1기술관": [
+        {
+          'floor': '2F',
+          'rooms': ['CAD실습실', '콘트롤러실습실'],
+          'capacity': 20
+        },
+      ],
+      "2기술관": [
+        {
+          'floor': '3F',
+          'rooms': ['자동차과이론강의실', 'PLC실습실'],
+          'capacity': 30
+        },
+        {
+          'floor': '2F',
+          'rooms': ['자동차과이론강의실', 'CAD/CAE실'],
+          'capacity': 25
+        },
+        {
+          'floor': '1F',
+          'rooms': ['CATIA실습실', '전기자동차실습실', '자동차과이론강의실'],
+          'capacity': 30
+        },
+      ],
+      "3기술관": [
+        {
+          'floor': '1F',
+          'rooms': ['아이디어 존'],
+          'capacity': 15
+        },
+      ],
+      "5기술관": [
+        {
+          'floor': '4F',
+          'rooms': [
+            '시제품창의개발실',
+            '아이디어카페',
+            '디자인워크샵실습실',
+            '융합디자인실습실',
+            '디지털디자인실습실',
+            '미디어창작실습실'
+          ],
+          'capacity': 25
+        },
+        {
+          'floor': '3F',
+          'rooms': ['강의실', '스터디룸', '반도체제어실', '전자CAD실', '기초전자실습실'],
+          'capacity': 30
+        },
+        {
+          'floor': '2F',
+          'rooms': ['AI융합프로젝트실습실', '인공지능프로그래밍실습실', 'ioT제어실습실'],
+          'capacity': 25
+        },
+        {
+          'floor': '1F',
+          'rooms': ['개인미디어실', '세미나실', '미디어편집실', 'AR그래픽실', '실감형콘텐츠운영실습실'],
+          'capacity': 20
+        },
+      ],
+      "7기술관": [
+        {
+          'floor': '3F',
+          'rooms': ['소그룹실', '강의실', '반도체 시스템 제작실'],
+          'capacity': 15
+        },
+      ],
+    };
+
+    for (var building in initialData.keys) {
+      for (var floorData in initialData[building]!) {
+        final floor = floorData['floor'] as String;
+        final capacity = floorData['capacity'] as int;
+
+        for (var room in floorData['rooms'] as List<String>) {
+          final docRef = spacesCollection.doc(); // 새 문서 ID 자동 생성
+
+          batch.set(docRef, {
+            'name': room,
+            'location': '$building $floor',
+            'buildingName': building,
+            'capacity': '$capacity명',
+            'isReservable': true,
+            'mainImageUrl': '',
+            'view360Url': '',
+            'createdAt': FieldValue.serverTimestamp(),
+          });
+        }
+      }
+    }
+
+    try {
+      await batch.commit();
+      print('✅✅✅ 초기 데이터 업로드 성공! (이제 이 함수 호출을 주석 처리하세요) ✅✅✅');
+    } catch (e) {
+      print('❌❌❌ 초기 데이터 업로드 실패: $e');
+    }
+  }
+
   Future<void> _checkLoginStatus() async {
     await Future.delayed(const Duration(seconds: 2));
     final user = FirebaseAuth.instance.currentUser;
 
     if (user != null) {
+      // ⭕ [여기!] 로그인이 확인된 시점에 데이터 업로드 실행
+      // (데이터가 들어간 거 확인하면 나중에 이 줄을 // 주석 처리하거나 지우세요)
+      await _uploadInitialData();
+
+      print("✅ 로그인된 사용자 확인됨, 데이터 업로드 시도...");
+
       try {
         DocumentSnapshot userDoc = await FirebaseFirestore.instance
             .collection('users')
