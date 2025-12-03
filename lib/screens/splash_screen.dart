@@ -8,7 +8,6 @@ import '../models/user_model.dart';
 import 'login_screen.dart';
 import 'home_screen.dart';
 import 'admin_screen.dart';
-// import 'dart:math' as math; // 🌟 회전 기능 뺐으니까 이건 이제 필요 없음!
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -21,7 +20,6 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-
     _checkLoginStatus(); // 앱이 켜지면 로그인 상태 확인 시작!
   }
 
@@ -29,7 +27,7 @@ class _SplashScreenState extends State<SplashScreen> {
     await Future.delayed(const Duration(seconds: 2));
 
     // [테스트용] 앱 켤 때마다 강제 로그아웃 (나중에 주석 처리 하세요!)
-    await FirebaseAuth.instance.signOut();
+    // await FirebaseAuth.instance.signOut(); // 👈 주석 처리! (자동 로그아웃 끄기)
 
     // 로그인 사용자 확인
     final user = FirebaseAuth.instance.currentUser;
@@ -98,7 +96,7 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // 💡 1. 아이콘 크기 (200) 유지 (기울기 제거됨)
+            // 💡 1. 아이콘 크기 (200) 유지
             Image.asset(
               'assets/images/logo_hi3d.png',
               width: 200,
@@ -115,9 +113,8 @@ class _SplashScreenState extends State<SplashScreen> {
               child: RichText(
                 textAlign: TextAlign.center,
                 text: TextSpan(
-                  // 🌟 [수정 완료] 여기 폰트 이름을 'manru'로 바꿨습니다!
                   style: const TextStyle(
-                    fontFamily: 'manru', // 이제 앱 전체 설정과 똑같이 만루체 적용!
+                    fontFamily: 'manru',
                     color: Color(0xFF0D47A1),
                     letterSpacing: 1.0,
                   ),
@@ -141,7 +138,7 @@ class _SplashScreenState extends State<SplashScreen> {
                       text: "360",
                       style: TextStyle(
                         fontSize: 52,
-                        fontWeight: FontWeight.w900, // 숫자는 더 굵게!
+                        fontWeight: FontWeight.w900,
                         color: const Color(0xFF2196F3),
                         shadows: [
                           Shadow(
