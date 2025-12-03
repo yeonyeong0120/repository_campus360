@@ -2,7 +2,6 @@
 import 'dart:async'; // Completer
 import 'package:google_maps_flutter/google_maps_flutter.dart'; // 구글맵 패키지
 import 'package:flutter/material.dart';
-import 'package:repository_campus360/consts/building_data.dart';
 import 'package:repository_campus360/consts/campus_markers.dart';
 import 'search_screen.dart'; // 검색결과랑 연결
 import 'detail_screen.dart'; // 🌟 [필수] 상세 화면 연결

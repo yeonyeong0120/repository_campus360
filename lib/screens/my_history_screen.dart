@@ -21,6 +21,7 @@ class _MyHistoryScreenState extends State<MyHistoryScreen>
   @override
   void initState() {
     super.initState();
+    // 탭 컨트롤러 초기화 (0: 내 티켓, 1: 리뷰 쓰기)
     _tabController = TabController(length: 2, vsync: this);
   }
 
@@ -100,7 +101,7 @@ class _MyHistoryScreenState extends State<MyHistoryScreen>
 
                 if (mounted) {
                   Navigator.pushReplacement(
-                    context, 
+                    context,
                     MaterialPageRoute(builder: (_) => const LoginScreen()),
                   );
                 }
@@ -211,8 +212,7 @@ class _MyHistoryScreenState extends State<MyHistoryScreen>
         return Container(
           color: _backgroundColor,
           child: ListView.separated(
-            physics: const BouncingScrollPhysics(), 
-            
+            physics: const BouncingScrollPhysics(),
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
             itemCount: docs.length,
             separatorBuilder: (context, index) => const SizedBox(height: 16),
@@ -223,6 +223,10 @@ class _MyHistoryScreenState extends State<MyHistoryScreen>
               return SimpleTicketItem(
                 key: ValueKey(data['docId']),
                 data: data,
+                // 리뷰 작성 버튼을 눌렀을 때 탭을 이동시키기 위한 콜백 함수 전달
+                onReviewTap: () {
+                  _tabController.animateTo(1); // 리뷰 탭으로 이동
+                },
               );
             },
           ),
@@ -273,7 +277,6 @@ class _MyHistoryScreenState extends State<MyHistoryScreen>
           color: _backgroundColor,
           child: ListView.separated(
             physics: const BouncingScrollPhysics(),
-            
             padding: const EdgeInsets.all(20),
             itemCount: docs.length,
             separatorBuilder: (context, index) => const SizedBox(height: 20),
@@ -292,7 +295,9 @@ class _MyHistoryScreenState extends State<MyHistoryScreen>
 
 class SimpleTicketItem extends StatefulWidget {
   final Map<String, dynamic> data;
-  const SimpleTicketItem({super.key, required this.data});
+  final VoidCallback? onReviewTap; // 리뷰 작성 이동 콜백 추가
+
+  const SimpleTicketItem({super.key, required this.data, this.onReviewTap});
 
   @override
   State<SimpleTicketItem> createState() => _SimpleTicketItemState();
@@ -303,6 +308,10 @@ class _SimpleTicketItemState extends State<SimpleTicketItem>
   late AnimationController _flipController;
   late Animation<double> _animation;
   bool _isFront = true;
+
+  // 높이를 전역적으로 줄이기 위해 상수 또는 변수로 관리해도 좋지만
+  // 여기서는 직접 위젯에서 160으로 수정합니다. (기존 190)
+  final double _ticketHeight = 160.0;
 
   @override
   void initState() {
@@ -330,7 +339,10 @@ class _SimpleTicketItemState extends State<SimpleTicketItem>
 
   void _onTicketTap() {
     final status = widget.data['status'];
+    // 취소됨, 거절됨 상태는 클릭 불가 (뒤집기 안됨)
     if (status == 'cancelled' || status == 'rejected') return;
+
+    // completed(사용완료)는 이제 뒤집기 허용! (리뷰 작성을 위해)
     _flipCard();
   }
 
@@ -382,8 +394,6 @@ class _SimpleTicketItemState extends State<SimpleTicketItem>
   }
 
   Widget _buildFrontSide(String? status, bool isCancelled) {
-
-    // 색상 로직은 여기서 설정
     Color themeColor = Colors.black;
     if (status == 'pending') themeColor = Colors.orange;
     if (status == 'confirmed') themeColor = Colors.blue;
@@ -393,7 +403,7 @@ class _SimpleTicketItemState extends State<SimpleTicketItem>
     return ClipPath(
       clipper: TicketClipper(),
       child: Container(
-        height: 190,
+        height: _ticketHeight,
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
@@ -412,23 +422,22 @@ class _SimpleTicketItemState extends State<SimpleTicketItem>
                 bottom: 0,
                 child: Container(width: 8, color: themeColor)),
             Padding(
-              padding: const EdgeInsets.fromLTRB(28, 20, 20, 20),
+              padding: const EdgeInsets.fromLTRB(28, 16, 20, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(widget.data['spaceName'] ?? 'SPACE TICKET',
                       style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: 'manru',
-                          color: isCancelled ? Colors.grey : Colors.black,
-                          ),                          
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'manru',
+                        color: isCancelled ? Colors.grey : Colors.black,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   Text("${widget.data['date']} | ${widget.data['timeSlot']}",
-                      style:
-                          TextStyle(color: Colors.grey[600], fontSize: 14)),
+                      style: TextStyle(color: Colors.grey[600], fontSize: 13)),
                   const Spacer(),
                   Row(
                       children: List.generate(
@@ -439,7 +448,7 @@ class _SimpleTicketItemState extends State<SimpleTicketItem>
                                       ? Colors.transparent
                                       : Colors.grey[300],
                                   height: 1)))),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -448,9 +457,11 @@ class _SimpleTicketItemState extends State<SimpleTicketItem>
                               16,
                               (index) => Container(
                                   width: index % 3 == 0 ? 1 : 3,
-                                  height: 24,
+                                  height: 20,
                                   margin: const EdgeInsets.only(right: 3),
-                                  color: isCancelled ? Colors.grey : Colors.black87))),
+                                  color: isCancelled
+                                      ? Colors.grey
+                                      : Colors.black87))),
                       Text(
                           "NO. ${widget.data['docId'].substring(0, 4).toUpperCase()}",
                           style: const TextStyle(
@@ -462,44 +473,36 @@ class _SimpleTicketItemState extends State<SimpleTicketItem>
                 ],
               ),
             ),
-            if (status != 'pending')
-              Positioned(
-                top: 50,
-                right: 40,
-                child: Transform.rotate(
-                  angle: -0.3,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                        border: Border.all(
-                            color: themeColor.withValues(alpha: .5),
-                            width: 3),
-                        borderRadius: BorderRadius.circular(8)),
-                    child: Text(
-                      status == 'confirmed'
-                          ? "CONFIRMED"
-                          : status == 'completed'
-                              ? "USED"
-                              : "CANCELLED",
-                      style: TextStyle(
-                          color: themeColor.withValues(alpha: 0.7),
-                          fontWeight: FontWeight.w900,
-                          fontSize: 16,
-                          letterSpacing: 1.5),
-                    ),
+            // 🔥 도장 표시 (모든 상태에 표시!)
+            Positioned(
+              top: 40,
+              right: 30,
+              child: Transform.rotate(
+                angle: -0.3,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                      border: Border.all(
+                          color: themeColor.withValues(alpha: .5), width: 3),
+                      borderRadius: BorderRadius.circular(8)),
+                  child: Text(
+                    status == 'pending'
+                        ? "대기중"
+                        : status == 'confirmed'
+                            ? "수락됨"
+                            : status == 'completed'
+                                ? "사용완료"
+                                : "취소됨",
+                    style: TextStyle(
+                        color: themeColor.withValues(alpha: 0.7),
+                        fontWeight: FontWeight.w900,
+                        fontSize: 18,
+                        letterSpacing: 1.5),
                   ),
                 ),
               ),
-            // 댜기 상태에서 취소할때
-            if (status == 'pending')
-              Positioned(
-                  bottom: 10,
-                  right: 10,
-                  child: Row(children: const [
-                    Text("터치하여 취소 >",
-                        style: TextStyle(fontSize: 10, color: Colors.grey))
-                  ]))
+            ),
           ],
         ),
       ),
@@ -527,7 +530,7 @@ class _SimpleTicketItemState extends State<SimpleTicketItem>
     return ClipPath(
       clipper: TicketClipper(),
       child: Container(
-        height: 190,
+        height: _ticketHeight, // 높이 160으로 줄임
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -545,18 +548,53 @@ class _SimpleTicketItemState extends State<SimpleTicketItem>
           children: [
             if (status == 'pending') ...[
               const Icon(Icons.warning_amber_rounded,
-                  size: 40, color: Colors.orange),
-              const SizedBox(height: 10),
+                  size: 36, color: Colors.orange), // 아이콘 크기 약간 축소
+              const SizedBox(height: 8),
               const Text("예약을 취소하시겠습니까?",
-                  style: TextStyle(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _cancelReservation,
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                child: const Text("예약 취소하기",
-                    style: TextStyle(color: Colors.white)),
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+              const SizedBox(height: 12),
+              SizedBox(
+                // 버튼 크기 조절을 위해 SizedBox 사용
+                height: 36,
+                child: ElevatedButton(
+                  onPressed: _cancelReservation,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                  ),
+                  child: const Text("예약 취소하기",
+                      style: TextStyle(color: Colors.white, fontSize: 13)),
+                ),
+              )
+            ] else if (status == 'completed') ...[
+              // 완료 상태일 때 뒷면 로직 추가
+              const Icon(Icons.rate_review_outlined,
+                  size: 36, color: Colors.green),
+              const SizedBox(height: 8),
+              const Text("이용이 완료되었습니다.",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+              const SizedBox(height: 12),
+              SizedBox(
+                height: 36,
+                child: ElevatedButton(
+                  onPressed: () {
+                    // 카드를 다시 뒤집고
+                    _flipCard();
+                    // 전달받은 콜백 함수 실행 (리뷰 탭으로 이동)
+                    if (widget.onReviewTap != null) {
+                      widget.onReviewTap!();
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                  ),
+                  child: const Text("리뷰 작성하러 가기",
+                      style: TextStyle(color: Colors.white, fontSize: 13)),
+                ),
               )
             ] else ...[
+              // 기존 로직 (확정됨, 취소됨 등)
               Row(
                 children: [
                   Container(
