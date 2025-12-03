@@ -5,12 +5,19 @@ import 'providers/user_provider.dart';
 // flutterfire configure가 생성한 파일
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart'; // 🌟 [추가됨] .env 파일 로드용 패키지
 import 'screens/splash_screen.dart'; // 스플래시
 
 void main() async {
   // Firebase가 네이티브 코드를 먼저 초기화
   WidgetsFlutterBinding.ensureInitialized();
+
   await initializeDateFormatting('ko_KR', null); // 한국어 문제 해결
+
+  // 🌟 [추가됨] 챗봇 API 키가 들어있는 .env 파일을 미리 열어둡니다.
+  // 이 코드가 없으면 챗봇 화면에서 키를 부를 때 "준비 안 됨(NotInitializedError)" 에러가 뜹니다.
+  await dotenv.load(fileName: ".env");
+
   // Firebase 앱 초기화
   await Firebase.initializeApp();
 
