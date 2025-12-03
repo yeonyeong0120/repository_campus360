@@ -165,14 +165,11 @@ class _SplashScreenState extends State<SplashScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       _buildFlightInfo("DEPART", "HOME"),
-                      // 비행기 아이콘 (가운데 포인트)
-                      Transform.rotate(
-                        angle: 1.57, // 90도 회전 (위쪽 향하게)
-                        child: Icon(
-                          Icons.flight_rounded,
-                          color: Colors.grey.withValues(alpha: 0.3),
-                          size: 24,
-                        ),
+                      // 달리는 사람으로 변경
+                      Icon(
+                        Icons.directions_run,
+                        color: Colors.grey.withValues(alpha: 0.3),
+                        size: 30,
                       ),
                       _buildFlightInfo("ARRIVE", "CAMPUS"),
                     ],
