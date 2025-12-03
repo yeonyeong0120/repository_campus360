@@ -13,13 +13,12 @@ class ReservationDetailScreen extends StatefulWidget {
 }
 
 class _ReservationDetailScreenState extends State<ReservationDetailScreen> {
-  // 기존 로직(리뷰 작성/삭제 등)은 그대로 유지합니다.
   final TextEditingController _reviewController = TextEditingController();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final User? currentUser = FirebaseAuth.instance.currentUser;
 
   int _currentRating = 5;
-  final bool _isLoading = false;
+  bool _isLoading = false; // final 제거 (상태 변경을 위해)
   bool _hasReview = false;
   String? _reviewDocId;
 
@@ -37,11 +36,9 @@ class _ReservationDetailScreenState extends State<ReservationDetailScreen> {
     super.dispose();
   }
 
-  // ... (기존 _checkExistingReview, _submitReview, _deleteReview 함수들 생략 없이 그대로 사용하세요)
-  // 편의상 이 답변에서는 UI 변경에 집중하기 위해 로직 함수는 위 코드 블록과 동일하다고 가정합니다.
-  // (실제 적용 시에는 기존 코드의 로직 함수들을 여기에 그대로 붙여넣어 주세요)
+  // 🔹 기존에 비어있던 함수들을 완전히 구현했습니다.
 
-  // 🔽 아래 함수들은 복사해서 붙여넣으세요 (로직 보존)
+  // 1. 이미 작성된 리뷰가 있는지 확인하는 함수
   Future<void> _checkExistingReview() async {
     try {
       final query = await _firestore
@@ -52,39 +49,116 @@ class _ReservationDetailScreenState extends State<ReservationDetailScreen> {
 
       if (query.docs.isNotEmpty) {
         final data = query.docs.first.data();
-        setState(() {
-          _hasReview = true;
-          _reviewDocId = query.docs.first.id;
-          _currentRating = data['rating'] ?? 5;
-          _reviewController.text = data['content'] ?? '';
-        });
+        if (mounted) {
+          setState(() {
+            _hasReview = true;
+            _reviewDocId = query.docs.first.id;
+            _currentRating = data['rating'] ?? 5;
+            _reviewController.text = data['content'] ?? '';
+          });
+        }
       }
     } catch (e) {
-      print(e);
+      print("리뷰 확인 중 오류 발생: $e");
     }
   }
 
+  // 2. 리뷰를 등록하거나 수정하는 함수
   Future<void> _submitReview() async {
-    // ... (기존 로직 동일)
-    // 실제 적용 시 위쪽 기존 코드의 _submitReview 내용을 그대로 사용하십시오.
+    if (_reviewController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('리뷰 내용을 입력해주세요.')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final reviewData = {
+        'reservationDocId': widget.reservation['docId'],
+        'userId': currentUser?.uid,
+        'userName': currentUser?.displayName ?? '익명',
+        'rating': _currentRating,
+        'content': _reviewController.text.trim(),
+        'timestamp': FieldValue.serverTimestamp(),
+        'spaceName': widget.reservation['spaceName'], // 나중에 리뷰 목록에서 보여주기 위함
+      };
+
+      if (_hasReview && _reviewDocId != null) {
+        // 수정 (Update)
+        await _firestore
+            .collection('reviews')
+            .doc(_reviewDocId)
+            .update(reviewData);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('리뷰가 수정되었습니다.')),
+          );
+        }
+      } else {
+        // 신규 작성 (Create)
+        final docRef = await _firestore.collection('reviews').add(reviewData);
+        if (mounted) {
+          setState(() {
+            _hasReview = true;
+            _reviewDocId = docRef.id;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('리뷰가 등록되었습니다.')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('오류가 발생했습니다: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
+  // 3. 리뷰를 삭제하는 함수 (필요 시 사용)
   Future<void> _deleteReview() async {
-    // ... (기존 로직 동일)
+    if (!_hasReview || _reviewDocId == null) return;
+
+    try {
+      await _firestore.collection('reviews').doc(_reviewDocId).delete();
+      if (mounted) {
+        setState(() {
+          _hasReview = false;
+          _reviewDocId = null;
+          _reviewController.clear();
+          _currentRating = 5;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('리뷰가 삭제되었습니다.')),
+        );
+      }
+    } catch (e) {
+      print("리뷰 삭제 중 오류: $e");
+    }
   }
 
-  // Helper 함수들
+  // 4. 상태에 따른 텍스트 반환 (취소 상태 포함)
   String getStatusText(String? status) {
-    // ... (기존 로직 동일)
     if (status == 'confirmed') return '예약 확정';
     if (status == 'completed') return '사용 완료';
+    if (status == 'canceled' || status == 'cancelled') return '예약 취소'; // 오타 대응
+    if (status == 'pending') return '예약 대기';
     return '상태 미정';
   }
 
+  // 5. 상태에 따른 색상 반환
   Color getStatusColor(String? status) {
     if (status == 'confirmed') return Colors.blue;
     if (status == 'completed') return Colors.grey;
-    return Colors.orange;
+    if (status == 'canceled' || status == 'cancelled') return Colors.red;
+    return Colors.orange; // pending
   }
 
   Widget _buildStar(int index) {
@@ -108,12 +182,17 @@ class _ReservationDetailScreenState extends State<ReservationDetailScreen> {
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
           return const Scaffold(
+              backgroundColor: Color(0xFF333333),
               body: Center(child: CircularProgressIndicator()));
         }
 
         final data = snapshot.data!.data() as Map<String, dynamic>?;
         if (data == null) {
-          return const Scaffold(body: Center(child: Text("데이터 없음")));
+          return const Scaffold(
+              backgroundColor: Color(0xFF333333),
+              body: Center(
+                  child:
+                      Text("데이터 없음", style: TextStyle(color: Colors.white))));
         }
 
         final currentStatus = data['status'] ?? 'pending';
@@ -157,7 +236,11 @@ class _ReservationDetailScreenState extends State<ReservationDetailScreen> {
                         child: Icon(
                           currentStatus == 'confirmed'
                               ? Icons.check_circle
-                              : Icons.schedule,
+                              : currentStatus == 'completed'
+                                  ? Icons.task_alt
+                                  : currentStatus == 'canceled'
+                                      ? Icons.cancel
+                                      : Icons.schedule,
                           size: 40,
                           color: getStatusColor(currentStatus),
                         ),
@@ -217,7 +300,7 @@ class _ReservationDetailScreenState extends State<ReservationDetailScreen> {
                           ),
                         ),
 
-                      // 360도 뷰 버튼 (기존 유지)
+                      // 360도 뷰 버튼
                       if (data['view360Url'] != null &&
                           data['view360Url'] != '') ...[
                         const SizedBox(height: 12),
@@ -272,15 +355,23 @@ class _ReservationDetailScreenState extends State<ReservationDetailScreen> {
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
-                            onPressed: _submitReview,
+                            onPressed: _isLoading ? null : _submitReview,
                             style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.blue,
                                 padding:
                                     const EdgeInsets.symmetric(vertical: 16)),
-                            child: const Text("리뷰 저장",
-                                style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold)),
+                            child: _isLoading
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                        color: Colors.white, strokeWidth: 2))
+                                : Text(
+                                    _hasReview ? "리뷰 수정" : "리뷰 저장",
+                                    style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold),
+                                  ),
                           ),
                         )
                       ],
