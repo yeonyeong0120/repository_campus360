@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_generative_ai/google_generative_ai.dart'; // AI 패키지
 import '../consts/school_info.dart'; // 프롬프트 데이터
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ChatbotSheet extends StatefulWidget {
   const ChatbotSheet({super.key});
@@ -21,7 +22,7 @@ class _ChatbotSheetState extends State<ChatbotSheet> {
   bool _isLoading = false;
 
   late final GenerativeModel _model;
-  final String _apiKey = 'AIzaSyBkJMsI8edhPYP3_jowbvJwlZxrLDT7u2o'; 
+  final String _apiKey = dotenv.env['GEMINI_API_KEY'] ?? '';
 
   @override
   void initState() {
