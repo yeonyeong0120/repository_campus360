@@ -6,8 +6,10 @@ import 'firebase_options.dart'; // flutterfire configure가 생성한 파일
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'screens/splash_screen.dart'; // 스플래시
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
+  await dotenv.load(fileName: ".env");  // env파일 
   // Firebase가 네이티브 코드를 먼저 초기화
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('ko_KR', null); // 한국어 문제 해결

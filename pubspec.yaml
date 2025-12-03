@@ -22,6 +22,7 @@ dependencies:
   webview_flutter: ^4.2.0  # 360도 뷰어 WebGL 연동을 위한 웹뷰 패키지
   google_generative_ai: ^0.4.7  # 구버전이라 안된대... ^0.4.7  # 신버전 금지...
   google_maps_flutter: ^2.14.0
+  flutter_dotenv: ^6.0.0
 
 dev_dependencies:
   flutter_test:
@@ -36,6 +37,7 @@ flutter:
   assets:
     - assets/images/
     - assets/images/maps/
+    - .env 
 
   # To add assets to your application, add an assets section, like this:
   # assets:
