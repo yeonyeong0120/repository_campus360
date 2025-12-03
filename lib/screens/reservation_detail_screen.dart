@@ -231,7 +231,7 @@ class _ReservationDetailScreenState extends State<ReservationDetailScreen> {
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                             color:
-                                getStatusColor(currentStatus).withOpacity(0.1),
+                                getStatusColor(currentStatus).withValues(alpha: 0.1),
                             shape: BoxShape.circle),
                         child: Icon(
                           currentStatus == 'confirmed'
@@ -325,33 +325,43 @@ class _ReservationDetailScreenState extends State<ReservationDetailScreen> {
                           fontWeight: FontWeight.bold,
                           letterSpacing: 1.5)),
                   const SizedBox(height: 12),
+                  
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.1), // 반투명
+                        color: Colors.white.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: Colors.white24)),
-                    child: Column(
+                    child: _isLoading 
+                      ? const Center(child: CircularProgressIndicator()) // 로딩 중일 때
+                      : Column(
                       children: [
+                        // 1. 별점 표시
                         Row(
                             mainAxisAlignment: MainAxisAlignment.center,
-                            children:
-                                List.generate(5, (index) => _buildStar(index))),
+                            children: List.generate(5, (index) => _buildStar(index))
+                        ),
                         const SizedBox(height: 16),
+
+                        // 2. 리뷰 작성 칸 vs 이미 쓴 리뷰 내용 ( _hasReview 변수 사용! )
                         TextField(
                           controller: _reviewController,
                           style: const TextStyle(color: Colors.white),
                           maxLines: 3,
-                          decoration: const InputDecoration(
-                            hintText: "상세한 이용 후기를 남겨주세요.",
-                            hintStyle: TextStyle(color: Colors.white54),
-                            enabledBorder: OutlineInputBorder(
+                          // 리뷰가 이미 있으면 수정 못하게 막기 (읽기 전용)
+                          readOnly: _hasReview, 
+                          decoration: InputDecoration(
+                            hintText: _hasReview ? "작성한 리뷰가 없습니다." : "상세한 이용 후기를 남겨주세요.",
+                            hintStyle: const TextStyle(color: Colors.white54),
+                            enabledBorder: const OutlineInputBorder(
                                 borderSide: BorderSide(color: Colors.white24)),
-                            focusedBorder: OutlineInputBorder(
+                            focusedBorder: const OutlineInputBorder(
                                 borderSide: BorderSide(color: Colors.blue)),
                           ),
                         ),
                         const SizedBox(height: 16),
+
+                        // 3. 버튼 (저장 vs 삭제) - ( _deleteReview 함수 사용! )
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
