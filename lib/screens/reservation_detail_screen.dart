@@ -161,7 +161,7 @@ class _ReservationDetailScreenState extends State<ReservationDetailScreen> {
         Navigator.pop(context); // 취소 후 리스트로 복귀
       }
     } catch (e) {
-      print(e);
+      debugPrint("예약 취소 중 오류 발생: $e");
     }
   }
 
