@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:intl/intl.dart';
 import 'dart:math' as math;
 
 class MyHistoryScreen extends StatefulWidget {
@@ -149,8 +148,9 @@ class _MyHistoryScreenState extends State<MyHistoryScreen>
           .where('status', isEqualTo: 'completed')
           .snapshots(),
       builder: (context, snapshot) {
-        if (!snapshot.hasData)
+        if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
+        }
         final docs = snapshot.data!.docs;
 
         if (docs.isEmpty) {
@@ -228,10 +228,11 @@ class _FlipTicketItemState extends State<FlipTicketItem>
   }
 
   void _flipCard() {
-    if (_isFront)
+    if (_isFront) {
       _flipController.forward();
-    else
+    } else {
       _flipController.reverse();
+    }
     setState(() => _isFront = !_isFront);
   }
 
@@ -260,8 +261,10 @@ class _FlipTicketItemState extends State<FlipTicketItem>
           .collection('reservations')
           .doc(widget.data['docId'])
           .update({'status': 'cancelled'});
+      if (!mounted) return;
       _flipCard(); // 다시 앞면으로
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text("오류: $e")));
     }
@@ -317,7 +320,7 @@ class _FlipTicketItemState extends State<FlipTicketItem>
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
+                  color: Colors.black.withValues(alpha: 0.08),
                   blurRadius: 8,
                   offset: const Offset(0, 4))
             ],
@@ -389,7 +392,7 @@ class _FlipTicketItemState extends State<FlipTicketItem>
                           horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
                           border: Border.all(
-                              color: themeColor.withOpacity(0.5), width: 3),
+                              color: themeColor.withValues(alpha: .5), width: 3),
                           borderRadius: BorderRadius.circular(8)),
                       child: Text(
                         status == 'confirmed'
@@ -398,7 +401,7 @@ class _FlipTicketItemState extends State<FlipTicketItem>
                                 ? "USED"
                                 : "CANCELLED",
                         style: TextStyle(
-                            color: themeColor.withOpacity(0.7),
+                            color: themeColor.withValues(alpha: 0.7),
                             fontWeight: FontWeight.w900,
                             fontSize: 16,
                             letterSpacing: 1.5),
@@ -506,7 +509,7 @@ class _ReviewActionItemState extends State<ReviewActionItem> {
             border: Border.all(color: Colors.black12),
             boxShadow: [
               BoxShadow(
-                  color: Colors.grey.withOpacity(0.1),
+                  color: Colors.grey.withValues(alpha: 0.1),
                   blurRadius: 6,
                   offset: const Offset(2, 4))
             ],
@@ -521,7 +524,7 @@ class _ReviewActionItemState extends State<ReviewActionItem> {
                 decoration: BoxDecoration(
                   color: hasReview
                       ? const Color(0xFFFFF176)
-                      : Colors.blue.withOpacity(0.1),
+                      : Colors.blue.withValues(alpha: 0.1),
                   borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(16),
                       topRight: Radius.circular(16)),

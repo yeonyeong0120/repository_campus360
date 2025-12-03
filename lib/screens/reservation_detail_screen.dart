@@ -59,7 +59,7 @@ class _ReservationDetailScreenState extends State<ReservationDetailScreen> {
         }
       }
     } catch (e) {
-      print("리뷰 확인 중 오류 발생: $e");
+      debugPrint("리뷰 확인 중 오류 발생: $e");
     }
   }
 
@@ -140,7 +140,7 @@ class _ReservationDetailScreenState extends State<ReservationDetailScreen> {
         );
       }
     } catch (e) {
-      print("리뷰 삭제 중 오류: $e");
+      debugPrint("리뷰 삭제 중 오류: $e");
     }
   }
 
@@ -361,29 +361,60 @@ class _ReservationDetailScreenState extends State<ReservationDetailScreen> {
                         ),
                         const SizedBox(height: 16),
 
-                        // 3. 버튼 (저장 vs 삭제) - ( _deleteReview 함수 사용! )
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: _isLoading ? null : _submitReview,
-                            style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.blue,
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 16)),
-                            child: _isLoading
-                                ? const SizedBox(
-                                    height: 20,
-                                    width: 20,
-                                    child: CircularProgressIndicator(
-                                        color: Colors.white, strokeWidth: 2))
-                                : Text(
-                                    _hasReview ? "리뷰 수정" : "리뷰 저장",
-                                    style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold),
-                                  ),
-                          ),
-                        )
+                        // 3. 버튼 영역 (조건: 리뷰가 있으면 '삭제+수정', 없으면 '저장')
+                        if (_hasReview)
+                          Row(
+                            children: [
+                              // 🗑️ 삭제 버튼 (여기서 _deleteReview 함수가 사용됨! -> 경고 해결 ✅)
+                              Expanded(
+                                child: OutlinedButton(
+                                  onPressed: _isLoading ? null : _deleteReview,
+                                  style: OutlinedButton.styleFrom(
+                                      foregroundColor: Colors.red[300],
+                                      side: BorderSide(color: Colors.red[300]!),
+                                      padding: const EdgeInsets.symmetric(vertical: 16)),
+                                  child: const Text("삭제"),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              // ✏️ 수정 버튼
+                              Expanded(
+                                child: ElevatedButton(
+                                  onPressed: _isLoading ? null : _submitReview,
+                                  style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.blue,
+                                      padding: const EdgeInsets.symmetric(vertical: 16)),
+                                  child: const Text("수정",
+                                      style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold)),
+                                ),
+                              ),
+                            ],
+                          )
+                        else
+                          // 💾 저장 버튼 (리뷰 없을 때)
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: _isLoading ? null : _submitReview,
+                              style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.blue,
+                                  padding: const EdgeInsets.symmetric(vertical: 16)),
+                              child: _isLoading
+                                  ? const SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                          color: Colors.white, strokeWidth: 2))
+                                  : const Text(
+                                      "리뷰 저장",
+                                      style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                            ),
+                          )
                       ],
                     ),
                   )
