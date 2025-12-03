@@ -114,11 +114,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   child: Image.asset(
                     'assets/images/logo_3d.png',
-                    width: 100, // 크기 살짝 조정
-                    height: 100,
+                    width: 180, // 크기 살짝 조정
+                    height: 180,
                     errorBuilder: (context, error, stackTrace) {
                       return const Icon(Icons.school_rounded,
-                          size: 80, color: mainBlue);
+                          size: 60, color: mainBlue);
                     },
                   ),
                 ),
@@ -130,7 +130,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       "CAMPUS ROOM",
                       style: TextStyle(
                         fontFamily: 'manru',
-                        fontSize: 20,
+                        fontSize: 25,
                         fontWeight: FontWeight.w600,
                         color: Colors.black87,
                         letterSpacing: 1.0,
@@ -140,7 +140,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       "360",
                       style: TextStyle(
                         fontFamily: 'manru',
-                        fontSize: 48,
+                        fontSize: 52,
                         fontWeight: FontWeight.w900,
                         height: 1.0,
                         color: mainBlue,
@@ -149,24 +149,13 @@ class _LoginScreenState extends State<LoginScreen> {
                   ],
                 ),
 
-                const SizedBox(height: 10),
-                Text(
-                  "Smart Check-in Service",
-                  style: TextStyle(
-                    fontFamily: 'manru',
-                    fontSize: 14,
-                    color: Colors.grey.withValues(alpha: 0.8), // 글씨 더 잘 보이게
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-
                 const SizedBox(height: 50),
 
                 // 2. 입력 폼 영역
                 _buildInputField(
                   controller: _emailController,
                   icon: Icons.alternate_email_rounded,
-                  hint: "Student ID / Email",
+                  hint: "User Email",
                   isObscure: false,
                 ),
                 const SizedBox(height: 16),
@@ -208,15 +197,13 @@ class _LoginScreenState extends State<LoginScreen> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: const [
                               Text(
-                                "Check In",
+                                "로그인하기",
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                   fontFamily: 'manru',
                                 ),
                               ),
-                              SizedBox(width: 8),
-                              Icon(Icons.flight_takeoff_rounded, size: 20),
                             ],
                           ),
                   ),
@@ -245,7 +232,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    _buildTextButton("Sign Up", () {
+                    _buildTextButton("회원가입", () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(builder: (_) => const SignupScreen()),
@@ -257,7 +244,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       color: Colors.grey.withValues(alpha: 0.3),
                       margin: const EdgeInsets.symmetric(horizontal: 20),
                     ),
-                    _buildTextButton("Forgot Password?", () {
+                    _buildTextButton("비밀번호를 잃어버렸어요", () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -265,25 +252,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       );
                     }, isBold: false),
                   ],
-                ),
-
-                const SizedBox(height: 20),
-
-                TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const AdminScreen()),
-                    );
-                  },
-                  child: Text(
-                    "Admin Access",
-                    style: TextStyle(
-                      color: Colors.grey.withValues(alpha: 0.5),
-                      fontSize: 12,
-                      fontFamily: 'manru',
-                    ),
-                  ),
                 ),
               ],
             ),
