@@ -58,7 +58,7 @@ class _LoginScreenState extends State<LoginScreen> {
               backgroundColor: const Color(0xFF1565C0),
               behavior: SnackBarBehavior.floating,
               margin: const EdgeInsets.only(bottom: 20, left: 16, right: 16),
-              duration: const Duration(seconds: 2),
+              duration: const Duration(seconds: 1), // 1초 설정
             ),
           );
 
@@ -79,8 +79,10 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } on FirebaseAuthException catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text("로그인 실패: ${e.message}")));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text("로그인 실패: ${e.message}"),
+          duration: const Duration(seconds: 1), // 1초 설정
+        ));
       }
     } finally {
       if (mounted) {
