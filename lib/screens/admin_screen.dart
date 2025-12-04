@@ -1,4 +1,3 @@
-// lib/screens/admin_screen.dart
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart'; // DB 접근
 import 'package:provider/provider.dart';
@@ -17,6 +16,9 @@ class AdminScreen extends StatelessWidget {
       child: Scaffold(
         backgroundColor: _backgroundColor,
         appBar: AppBar(
+          // 🔥 [수정] 뒤로가기 버튼 자동 생성 끄기
+          automaticallyImplyLeading: false,
+
           title: const Text("관리자 페이지",
               style: TextStyle(
                   color: Colors.black,
@@ -184,7 +186,6 @@ class _ReservationApprovalList extends StatelessWidget {
             ),
             ElevatedButton(
               onPressed: () {
-                // 거절 처리 ('rejected' 상태로 변경)
                 _updateStatus(docId, 'rejected', reason: reasonController.text);
                 Navigator.pop(context);
               },
@@ -230,7 +231,7 @@ class _ReservationApprovalList extends StatelessWidget {
             final docId = docs[index].id;
 
             return GestureDetector(
-              onTap: () => _showDetailInfo(context, data), // 박스 클릭 시 상세 정보 팝업
+              onTap: () => _showDetailInfo(context, data),
               child: Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -341,7 +342,6 @@ class _ReservationApprovalList extends StatelessWidget {
 class _ReservationHistoryList extends StatelessWidget {
   const _ReservationHistoryList();
 
-  // 🔥 [상태별 색상] 승인완료(파랑), 본인취소(회색), 거절함(빨강)
   Color _getStatusColor(String status) {
     if (status == 'confirmed' || status == 'completed') {
       return Colors.blue;
@@ -353,14 +353,13 @@ class _ReservationHistoryList extends StatelessWidget {
     return Colors.black;
   }
 
-  // 🔥 [상태별 텍스트] 완료됨도 '승인완료'로 통합
   String _getStatusText(String status) {
     if (status == 'confirmed' || status == 'completed') {
       return "승인완료";
     } else if (status == 'cancelled') {
-      return "본인취소"; // 사용자가 취소한 경우
+      return "본인취소";
     } else if (status == 'rejected') {
-      return "거절함"; // 관리자 거절 or 시간 초과(DB에서 rejected로 저장 시)
+      return "거절함";
     }
     return status;
   }
@@ -368,7 +367,6 @@ class _ReservationHistoryList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<QuerySnapshot>(
-      // 대기중(pending)을 제외한 모든 상태 가져오기
       stream: FirebaseFirestore.instance
           .collection('reservations')
           .where('status',
@@ -455,7 +453,7 @@ class _ReservationHistoryList extends StatelessWidget {
                     ],
                   ),
 
-                  // 거절된 경우 사유 표시
+                  // 🔥 [수정] 거절 사유 디자인 (진회색)
                   if (status == 'rejected' &&
                       data['rejectionReason'] != null) ...[
                     const SizedBox(height: 12),
@@ -463,12 +461,13 @@ class _ReservationHistoryList extends StatelessWidget {
                       width: double.infinity,
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.red[50],
+                        color: Colors.grey[100], // 배경 연한 회색
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         "거절 사유: ${data['rejectionReason']}",
-                        style: const TextStyle(color: Colors.red, fontSize: 13),
+                        style: TextStyle(
+                            color: Colors.grey[800], fontSize: 13), // 글자 진한 회색
                       ),
                     ),
                   ]
