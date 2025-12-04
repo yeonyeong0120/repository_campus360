@@ -1,4 +1,5 @@
 // lib/screens/reservation_detail_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -237,6 +238,14 @@ class _ReservationDetailScreenState extends State<ReservationDetailScreen> {
           return const Scaffold(body: Center(child: Text("데이터 없음")));
         }
 
+        // 🔥 [수정] 시간 정보 합치기
+        final String timeDisplay =
+            "${data['startTime'] ?? '정보 없음'} ~ ${data['endTime'] ?? '정보 없음'}";
+        // 🔥 [수정] 연락처와 소속 정보 가져오기
+        final String userContact = data['userContact'] ?? '정보 없음';
+        final String userOrg = data['userOrg'] ?? '정보 없음';
+        final int participants = data['participants'] ?? 1;
+
         final currentStatus = data['status'] ?? 'pending';
 
         return Scaffold(
@@ -313,12 +322,21 @@ class _ReservationDetailScreenState extends State<ReservationDetailScreen> {
                             fontSize: 18),
                       ),
                       const SizedBox(height: 40),
+
                       _buildDetailRow("날짜", data['date'] ?? '-'),
-                      _buildDetailRow("시간", data['timeSlot'] ?? '-'),
+                      _buildDetailRow("시간", timeDisplay), // 🔥 수정됨: 합쳐진 시간 표시
                       _buildDetailRow("예약자", data['userName'] ?? 'User'),
+                      // 🔥 [추가] 전화번호와 소속/학번 표시
+                      _buildDetailRow("연락처", userContact),
+                      _buildDetailRow("소속/학번", userOrg),
+                      // 🔥 [추가] 인원수 표시
+                      _buildDetailRow("인원", "${participants}명"),
+
                       _buildDetailRow("티켓 번호",
                           data['docId']?.substring(0, 8).toUpperCase() ?? '-'),
+
                       const SizedBox(height: 40),
+
                       if (currentStatus == 'pending' ||
                           currentStatus == 'confirmed')
                         SizedBox(
@@ -385,7 +403,7 @@ class _ReservationDetailScreenState extends State<ReservationDetailScreen> {
                           readOnly: _hasReview,
                           decoration: InputDecoration(
                             hintText: _hasReview
-                                ? "작성한 리뷰가 없습니다."
+                                ? "작성한 리뷰가 있습니다." // 💡 힌트 텍스트 수정
                                 : "상세한 이용 후기를 남겨주세요.",
                             hintStyle: const TextStyle(color: Colors.grey),
                             fillColor: const Color(0xFFF5F5F5),

@@ -4,62 +4,68 @@ import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
 import 'login_screen.dart';
 
-class AdminScreen extends StatelessWidget {
-  const AdminScreen({super.key});
+// ---------------------------------------------------------
+// 🔥 유저 상세 정보 조회 위젯 (학과, 학번 등)
+// ---------------------------------------------------------
+class _UserLookupWidget extends StatelessWidget {
+  final String userId;
+  final String spaceName;
 
-  final Color _backgroundColor = const Color(0xFFF5F7FA);
+  const _UserLookupWidget({required this.userId, required this.spaceName});
+
+  Widget _buildDetailRow(String label, String? value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 80,
+            child: Text(label,
+                style: const TextStyle(
+                    color: Colors.grey,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold)),
+          ),
+          Expanded(
+            child: Text(value ?? '-',
+                style:
+                    const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 2,
-      child: Scaffold(
-        backgroundColor: _backgroundColor,
-        appBar: AppBar(
-          // 🔥 [수정] 뒤로가기 버튼 자동 생성 끄기
-          automaticallyImplyLeading: false,
+    return FutureBuilder<DocumentSnapshot>(
+      // reservation 문서의 userId를 이용해 users 컬렉션에서 정보를 가져옴
+      future: FirebaseFirestore.instance.collection('users').doc(userId).get(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Text("유저 정보 로딩 중...",
+              style: TextStyle(color: Colors.grey));
+        }
+        if (snapshot.hasError || !snapshot.hasData || !snapshot.data!.exists) {
+          // 유저 정보가 DB users 컬렉션에 누락된 경우
+          return const Text("유저 정보(학과/학번)를 찾을 수 없습니다.",
+              style: TextStyle(color: Colors.red));
+        }
 
-          title: const Text("관리자 페이지",
-              style: TextStyle(
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'manru')),
-          centerTitle: true,
-          backgroundColor: Colors.white,
-          elevation: 0,
-          iconTheme: const IconThemeData(color: Colors.black),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.logout, color: Colors.red),
-              onPressed: () {
-                context.read<UserProvider>().clearUser();
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (_) => const LoginScreen()),
-                );
-              },
-            ),
-          ],
-          bottom: const TabBar(
-            indicatorColor: Colors.black,
-            labelColor: Colors.black,
-            unselectedLabelColor: Colors.grey,
-            indicatorWeight: 3,
-            labelStyle:
-                TextStyle(fontWeight: FontWeight.bold, fontFamily: 'manru'),
-            tabs: [
-              Tab(text: "예약 승인 관리"),
-              Tab(text: "예약 신청 목록"),
-            ],
-          ),
-        ),
-        body: const TabBarView(
+        final userData = snapshot.data!.data() as Map<String, dynamic>;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _ReservationApprovalList(),
-            _ReservationHistoryList(),
+            _buildDetailRow("예약 공간", spaceName),
+            _buildDetailRow("예약자명", userData['name'] ?? '정보 없음'),
+            _buildDetailRow("학번", userData['studentId'] ?? '정보 없음'),
+            _buildDetailRow("학과", userData['department'] ?? '정보 없음'),
+            _buildDetailRow("권한", userData['role'] ?? '정보 없음'),
           ],
-        ),
-      ),
+        );
+      },
     );
   }
 }
@@ -75,7 +81,6 @@ class _ReservationApprovalList extends StatelessWidget {
       {String? reason}) async {
     final Map<String, dynamic> updateData = {'status': newStatus};
 
-    // 거절 사유가 있으면 저장
     if (reason != null && reason.trim().isNotEmpty) {
       updateData['rejectionReason'] = reason.trim();
     }
@@ -87,7 +92,15 @@ class _ReservationApprovalList extends StatelessWidget {
   }
 
   // [기능] 상세 정보 보기 다이얼로그
-  void _showDetailInfo(BuildContext context, Map<String, dynamic> data) {
+  void _showDetailInfo(
+      BuildContext context, Map<String, dynamic> data, String docId) {
+    // 🔥 예약 문서에서 직접 가져오는 데이터 (FormScreen에서 저장한 키 값)
+    String timeDisplay = data['timeSlot'] ?? '시간 정보 없음';
+    String userId = data['userId'] ?? '';
+    String purpose = data['purpose'] ?? '내용 없음'; // FormScreen 키: 'purpose'
+    String contact = data['contact'] ?? '정보 없음'; // FormScreen 키: 'contact'
+    int headCount = data['headCount'] ?? 1; // FormScreen 키: 'headCount'
+
     showDialog(
       context: context,
       builder: (context) {
@@ -103,19 +116,26 @@ class _ReservationApprovalList extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                _buildDetailRow("예약 공간", data['spaceName']),
-                _buildDetailRow("예약자명", data['userName']),
-                _buildDetailRow("연락처", data['phoneNumber'] ?? '정보 없음'),
-                _buildDetailRow("소속/학번", data['department'] ?? '정보 없음'),
+                // 1. 유저 정보 (Async Lookup으로 학번/학과 가져오기)
+                if (userId.isNotEmpty)
+                  _UserLookupWidget(
+                      userId: userId, spaceName: data['spaceName']),
+
                 const Divider(height: 20),
+
+                // 2. 예약 정보
                 _buildDetailRow("날짜", data['date']),
-                _buildDetailRow("시간", data['timeSlot']),
-                _buildDetailRow("인원", "${data['participants'] ?? '-'}명"),
+                _buildDetailRow("시간", timeDisplay),
+                _buildDetailRow("인원", "${headCount}명"),
+                _buildDetailRow("연락처", contact), // ✅ 수정된 키 사용
+
                 const Divider(height: 20),
+
+                // 3. 신청 사유
                 const Text("신청 사유",
                     style: TextStyle(color: Colors.grey, fontSize: 12)),
                 const SizedBox(height: 4),
-                Text(data['purpose'] ?? '내용 없음',
+                Text(purpose, // ✅ 수정된 키 사용
                     style: const TextStyle(fontSize: 14)),
               ],
             ),
@@ -231,7 +251,8 @@ class _ReservationApprovalList extends StatelessWidget {
             final docId = docs[index].id;
 
             return GestureDetector(
-              onTap: () => _showDetailInfo(context, data),
+              onTap: () =>
+                  _showDetailInfo(context, data, docId), // 박스 클릭 시 상세 정보 팝업
               child: Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -277,7 +298,7 @@ class _ReservationApprovalList extends StatelessWidget {
                     _buildInfoRow(
                         Icons.calendar_today_outlined, "${data['date']}"),
                     const SizedBox(height: 6),
-                    _buildInfoRow(Icons.access_time, "${data['timeSlot']}"),
+                    _buildInfoRow(Icons.access_time, data['timeSlot']),
                     const SizedBox(height: 6),
                     _buildInfoRow(Icons.person_outline,
                         "${data['userName']} (클릭하여 상세 보기)"),
@@ -392,6 +413,8 @@ class _ReservationHistoryList extends StatelessWidget {
             final data = docs[index].data() as Map<String, dynamic>;
             final status = data['status'] ?? 'unknown';
 
+            String timeDisplay = data['timeSlot'] ?? '시간 정보 없음';
+
             return Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
@@ -447,13 +470,13 @@ class _ReservationHistoryList extends StatelessWidget {
                       const Icon(Icons.access_time_filled,
                           size: 16, color: Colors.grey),
                       const SizedBox(width: 4),
-                      Text("${data['date']} | ${data['timeSlot']}",
+                      Text("${data['date']} | $timeDisplay",
                           style: const TextStyle(
                               fontSize: 13, color: Colors.grey)),
                     ],
                   ),
 
-                  // 🔥 [수정] 거절 사유 디자인 (진회색)
+                  // 거절 사유 디자인
                   if (status == 'rejected' &&
                       data['rejectionReason'] != null) ...[
                     const SizedBox(height: 12),
@@ -461,13 +484,12 @@ class _ReservationHistoryList extends StatelessWidget {
                       width: double.infinity,
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.grey[100], // 배경 연한 회색
+                        color: Colors.grey[100],
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         "거절 사유: ${data['rejectionReason']}",
-                        style: TextStyle(
-                            color: Colors.grey[800], fontSize: 13), // 글자 진한 회색
+                        style: TextStyle(color: Colors.grey[800], fontSize: 13),
                       ),
                     ),
                   ]
@@ -477,6 +499,67 @@ class _ReservationHistoryList extends StatelessWidget {
           },
         );
       },
+    );
+  }
+}
+
+// ---------------------------------------------------------
+// 메인 관리자 스크린
+// ---------------------------------------------------------
+class AdminScreen extends StatelessWidget {
+  const AdminScreen({super.key});
+
+  final Color _backgroundColor = const Color(0xFFF5F7FA);
+
+  @override
+  Widget build(BuildContext context) {
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        backgroundColor: _backgroundColor,
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          title: const Text("관리자 페이지",
+              style: TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'manru')),
+          centerTitle: true,
+          backgroundColor: Colors.white,
+          elevation: 0,
+          iconTheme: const IconThemeData(color: Colors.black),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.logout, color: Colors.red),
+              onPressed: () {
+                context.read<UserProvider>().clearUser();
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
+                );
+              },
+            ),
+          ],
+          bottom: const TabBar(
+            indicatorColor: Colors.black,
+            labelColor: Colors.black,
+            unselectedLabelColor: Colors.grey,
+            indicatorWeight: 3,
+            labelStyle:
+                TextStyle(fontWeight: FontWeight.bold, fontFamily: 'manru'),
+            tabs: [
+              Tab(text: "예약 승인 관리"),
+              Tab(text: "예약 신청 목록"),
+            ],
+          ),
+        ),
+        body: const TabBarView(
+          children: [
+            _ReservationApprovalList(),
+            _ReservationHistoryList(),
+          ],
+        ),
+      ),
     );
   }
 }

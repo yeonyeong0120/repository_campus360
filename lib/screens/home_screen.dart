@@ -161,12 +161,12 @@ class HomeScreen extends StatelessWidget {
         children: const [
           // 1. 배너 위젯
           Expanded(
-            flex: 10,
+            flex: 13,
             child: HomeBannerWidget(),
           ),
-          // 2. 리뷰 리스트 위젯
+          // 2. 리뷰 리스트 위젯 (flex: 14로 수정하여 3개 리뷰가 온전히 보이도록 공간 확보)
           Expanded(
-            flex: 11,
+            flex: 14,
             child: HomeReviewListWidget(),
           ),
         ],
@@ -175,7 +175,7 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-// 2️⃣ 배너 위젯 (🔥 랜덤 3개 추천 로직 적용됨)
+// 2️⃣ 배너 위젯 (🔥 지정된 3개만 노출되도록 수정됨)
 class HomeBannerWidget extends StatefulWidget {
   const HomeBannerWidget({super.key});
 
@@ -188,7 +188,6 @@ class _HomeBannerWidgetState extends State<HomeBannerWidget> {
   int _currentPage = 0;
   Timer? _timer;
 
-  // 🔥 랜덤으로 선택된 공간들을 저장할 리스트 (계속 바뀌지 않게 저장)
   List<DocumentSnapshot> _bannerSpaces = [];
 
   @override
@@ -223,10 +222,12 @@ class _HomeBannerWidgetState extends State<HomeBannerWidget> {
   }
 
   Widget _buildHeroCard(Map<String, dynamic> space) {
-    // 💡 1. 이미지 처리
+    // 💡 1. 이미지 처리 (로컬 에셋 지원)
     String imageUrl = space['mainImageUrl'] ?? '';
-    if (imageUrl.isEmpty) {
-      imageUrl = 'https://via.placeholder.com/600x400?text=No+Image';
+
+    // DB에 'image' 필드로 저장되었을 수도 있으니 확인 (SearchScreen 로직 반영)
+    if (imageUrl.isEmpty && space['image'] != null) {
+      imageUrl = space['image'];
     }
 
     return Stack(
@@ -236,10 +237,20 @@ class _HomeBannerWidgetState extends State<HomeBannerWidget> {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              CommonImage(
-                imageUrl,
-                fit: BoxFit.cover,
-              ),
+              // 🔥 [수정] CommonImage 대신 직접 로직 구현 (로컬/네트워크/에셋 구분)
+              imageUrl.startsWith('http')
+                  ? CommonImage(imageUrl, fit: BoxFit.cover)
+                  : Image.asset(
+                      imageUrl.isEmpty
+                          ? 'assets/images/placeholder.png'
+                          : imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return const Center(
+                            child: Icon(Icons.image_not_supported,
+                                color: Colors.grey, size: 50));
+                      },
+                    ),
               Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -298,9 +309,6 @@ class _HomeBannerWidgetState extends State<HomeBannerWidget> {
             color: Colors.transparent,
             child: InkWell(
               onTap: () {
-                // 🔥 [수정됨] 상세 페이지로 넘기기 전에 데이터 안전장치 마련
-                // capacity가 숫자일 수도 있고 문자일 수도 있으니 String으로 변환
-                // 없으면 '0'으로 설정
                 if (space['capacity'] == null) {
                   space['capacity'] = '0';
                 } else {
@@ -335,14 +343,22 @@ class _HomeBannerWidgetState extends State<HomeBannerWidget> {
 
         final docs = snapshot.data!.docs;
 
-        // 🔥 [수정됨] 데이터가 로드되었고, 아직 랜덤 리스트를 안 뽑았다면 뽑는다.
-        // 이렇게 해야 화면이 갱신될 때마다 배너가 바뀌지 않고 고정됨.
+        // 🔥 [핵심 수정] 랜덤 셔플을 끄고, 발표용으로 지정한 3개만 가져오기
         if (_bannerSpaces.isEmpty && docs.isNotEmpty) {
-          // 1. 전체 리스트를 복사해서 섞는다 (Shuffle)
-          List<DocumentSnapshot> shuffledDocs = List.from(docs)..shuffle();
-          // 2. 앞에서 3개만 자른다 (Take 3)
-          // 데이터가 3개보다 적으면 있는 만큼만 가져옴
-          _bannerSpaces = shuffledDocs.take(3).toList();
+          // 1. 발표용 타겟 강의실 이름 목록
+          final targetNames = ['컨퍼런스룸', '강의실 2', '디지털데이터활용실습실'];
+
+          // 2. 해당 이름과 일치하는 문서만 필터링
+          _bannerSpaces = docs.where((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            return targetNames.contains(data['name']);
+          }).toList();
+
+          // 3. (안전장치) 만약 DB에 저 이름들이 없으면, 기존처럼 랜덤 3개 띄우기
+          if (_bannerSpaces.isEmpty) {
+            List<DocumentSnapshot> shuffledDocs = List.from(docs)..shuffle();
+            _bannerSpaces = shuffledDocs.take(3).toList();
+          }
         } else if (docs.isEmpty) {
           return const Center(child: Text("등록된 공간이 없습니다."));
         }
@@ -356,7 +372,7 @@ class _HomeBannerWidgetState extends State<HomeBannerWidget> {
                   _currentPage = index;
                 });
               },
-              itemCount: _bannerSpaces.length, // 🔥 랜덤 3개 개수 사용
+              itemCount: _bannerSpaces.length,
               itemBuilder: (context, index) {
                 final spaceData =
                     _bannerSpaces[index].data() as Map<String, dynamic>;
@@ -440,8 +456,21 @@ class HomeReviewListWidget extends StatelessWidget {
                   .limit(10)
                   .snapshots(),
               builder: (context, snapshot) {
-                if (snapshot.hasError)
-                  return const Center(child: Text("오류 발생"));
+                // 🔥 에러가 났을 때 진짜 에러 내용을 화면에 보여줍니다.
+                if (snapshot.hasError) {
+                  debugPrint("리뷰 로딩 에러: ${snapshot.error}"); // 콘솔에도 출력
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Text(
+                        "오류가 발생했습니다.\n${snapshot.error}", // 어떤 오류인지 보여줌
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: Colors.red),
+                      ),
+                    ),
+                  );
+                }
+
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 }
@@ -463,9 +492,10 @@ class HomeReviewListWidget extends StatelessWidget {
                 }
 
                 return ListView.separated(
+                  // itemCount를 최대 3개로 제한하여 스크롤 없이 3개가 온전히 보이도록 합니다.
+                  itemCount: docs.length > 3 ? 3 : docs.length,
                   padding:
                       const EdgeInsets.symmetric(horizontal: 24, vertical: 5),
-                  itemCount: docs.length,
                   separatorBuilder: (context, index) =>
                       const Divider(height: 1, color: Color(0xFFF0F0F0)),
                   itemBuilder: (context, index) {
@@ -523,7 +553,6 @@ class HomeReviewListWidget extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: () async {
-          // 🔥 리뷰 클릭 시 DB에서 정확한 공간 정보 조회
           try {
             final snapshot = await FirebaseFirestore.instance
                 .collection('spaces')
@@ -535,7 +564,6 @@ class HomeReviewListWidget extends StatelessWidget {
               final realSpaceData = snapshot.docs.first.data();
               realSpaceData['docId'] = snapshot.docs.first.id;
 
-              // 🔥 여기도 동일하게 capacity 데이터 안전장치 추가
               if (realSpaceData['capacity'] == null) {
                 realSpaceData['capacity'] = '0';
               } else {
@@ -555,7 +583,6 @@ class HomeReviewListWidget extends StatelessWidget {
                 );
               }
             } else {
-              // DB에 없는 경우
               if (context.mounted) {
                 Navigator.push(
                   context,
@@ -564,7 +591,7 @@ class HomeReviewListWidget extends StatelessWidget {
                       space: {
                         "name": spaceName,
                         "location": "위치 정보 없음",
-                        "capacity": "0", // 임시 데이터 '0'으로 설정
+                        "capacity": "0",
                         "mainImageUrl": "",
                         "buildingName": "미등록 공간",
                       },
@@ -601,7 +628,7 @@ class HomeReviewListWidget extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      // 🚨 [수정] 닉네임과 시간 정보를 같은 Row에 배치하여 공간 절약
                       children: [
                         Text(
                           displayName,
@@ -610,6 +637,16 @@ class HomeReviewListWidget extends StatelessWidget {
                             fontSize: 17,
                           ),
                         ),
+                        const SizedBox(width: 8), // 닉네임과 시간 사이 간격
+                        Text(
+                          // 🚨 시간 정보
+                          _formatDate(createdAt),
+                          style: TextStyle(
+                            color: Colors.grey[400],
+                            fontSize: 12,
+                          ),
+                        ),
+                        const Spacer(), // 나머지 공간 채우기
                         Row(
                           children: List.generate(5, (index) {
                             return Icon(
@@ -624,14 +661,6 @@ class HomeReviewListWidget extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 2),
-                    Text(
-                      _formatDate(createdAt),
-                      style: TextStyle(
-                        color: Colors.grey[400],
-                        fontSize: 12,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
                     Text(
                       content,
                       maxLines: 1,
