@@ -3,11 +3,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'detail_screen.dart';
 
 class SearchScreen extends StatefulWidget {
+  // MapScreen에서 검색어와 필터(인원수)를 받기 위해 변수를 추가합니다.
   final String? initialQuery;
+  final int minCapacity; // 최소 수용 인원 필터
 
   const SearchScreen({
     super.key,
     this.initialQuery,
+    this.minCapacity = 0, // 기본값은 0명
   });
 
   @override
@@ -88,29 +91,36 @@ class _SearchScreenState extends State<SearchScreen> {
 
           final docs = snapshot.data!.docs.where((doc) {
             final data = doc.data() as Map<String, dynamic>;
-            final name = (data['name'] ?? '').toString().toLowerCase();
-            final location = (data['location'] ?? '').toString().toLowerCase();
+            final name = data['name'].toString().toLowerCase();
+            final location = data['location'].toString().toLowerCase();
 
-            // 🔥 건물명 필터 (initialQuery가 있을 때)
-            if (_isInitialFilterActive && widget.initialQuery != null) {
-              final queryLower = widget.initialQuery!.toLowerCase();
-              return location.contains(queryLower);
+            // 인원수 필터링
+            String rawCapacity = (data['capacity'] ?? '0').toString();
+            String capacityOnlyNumber =
+                rawCapacity.replaceAll(RegExp(r'[^0-9]'), '');
+            int capacity = int.tryParse(capacityOnlyNumber) ?? 0;
+
+            if (capacity < widget.minCapacity) {
+              return false;
             }
 
-            // 검색어가 비어 있으면 모두 표시
+            // 검색어 필터링
             if (searchLower.isEmpty) {
               return true;
             }
 
-            // 일반 검색 (이름 또는 위치에 검색어 포함)
+            if (_isInitialFilterActive &&
+                _searchController.text == widget.initialQuery) {
+              return location.contains(searchLower);
+            }
+
             return name.contains(searchLower) || location.contains(searchLower);
           }).toList();
 
           if (docs.isEmpty) {
-            final emptyMessage =
-                _isInitialFilterActive && widget.initialQuery != null
-                    ? "${widget.initialQuery}에 등록된 공간이 없습니다."
-                    : "조건에 맞는 검색 결과가 없습니다.";
+            final emptyMessage = _isInitialFilterActive
+                ? "${widget.initialQuery}에 등록된 공간이 없습니다."
+                : "조건에 맞는 검색 결과가 없습니다.";
 
             return Center(child: Text(emptyMessage));
           }
@@ -144,6 +154,8 @@ class _SearchScreenState extends State<SearchScreen> {
                 ),
                 child: ListTile(
                   contentPadding: const EdgeInsets.all(16),
+
+                  // 🔥 [수정됨] 이미지 표시 부분 (인터넷 vs 로컬 구분)
                   leading: Container(
                     width: 50,
                     height: 50,
@@ -154,11 +166,29 @@ class _SearchScreenState extends State<SearchScreen> {
                     child: data['image'] != null
                         ? ClipRRect(
                             borderRadius: BorderRadius.circular(12),
-                            child:
-                                Image.network(data['image'], fit: BoxFit.cover),
+                            child: data['image'].startsWith('http')
+                                ? Image.network(
+                                    data['image'],
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return const Center(
+                                          child: Icon(Icons.broken_image,
+                                              color: Colors.grey));
+                                    },
+                                  )
+                                : Image.asset(
+                                    data['image'],
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return const Center(
+                                          child: Icon(Icons.image_not_supported,
+                                              color: Colors.grey));
+                                    },
+                                  ),
                           )
                         : const Icon(Icons.meeting_room, color: Colors.grey),
                   ),
+
                   title: Text(
                     data['name'] ?? '이름 없음',
                     style: const TextStyle(
