@@ -73,6 +73,9 @@ class _MapScreenState extends State<MapScreen> {
             zoomControlsEnabled: false,
             myLocationEnabled: true,
             myLocationButtonEnabled: false,
+            // 🚨 수정: 지도 기본 UI 버튼 제거 (특수 문자 오류 없음)
+            mapToolbarEnabled: false, // 지도 도구 모음 버튼 (길찾기, 스트리트 뷰) 제거
+            compassEnabled: false, // 나침반 버튼 제거
             onMapCreated: (GoogleMapController controller) {
               _controller.complete(controller);
             },
