@@ -26,6 +26,55 @@ class _DetailScreenState extends State<DetailScreen>
   final PageController _imagePageController = PageController();
   int _currentImageIndex = 0;
 
+  // 🔥 [수정됨] Map<String, String> -> Map<String, List<String>>으로 변경
+  // 이제 한 강의실에 여러 장의 사진을 등록할 수 있습니다.
+  static const Map<String, List<String>> _localImageMap = {
+    // [요청하신 3개] - 3장씩 보여주기 위해 리스트에 3개씩 넣었습니다.
+    // (다른 사진 파일이 있다면 파일명만 바꿔주세요!)
+    '강의실 2': [
+      'assets/images/강의실2.png',
+      'assets/images/강의실2.png', // 2번째 사진 (테스트용 복사)
+      'assets/images/강의실2.png', // 3번째 사진 (테스트용 복사)
+    ],
+    '컨퍼런스룸': [
+      'assets/images/컨퍼런스룸.png',
+      'assets/images/컨퍼런스룸.png',
+      'assets/images/컨퍼런스룸.png',
+    ],
+    '디지털데이터활용실습실': [
+      'assets/images/디지털데이터활용실습실.png',
+      'assets/images/디지털데이터활용실습실.png',
+      'assets/images/디지털데이터활용실습실.png',
+    ],
+
+    // [나머지 강의실들 - 파일이 없으면 tech2.png 등으로 대체]
+    'CATIA실습실': ['assets/images/tech2.png'],
+    '전기자동차실습실': ['assets/images/tech2.png'],
+    '자동차과이론강의실': ['assets/images/tech2.png'],
+    'CAD/CAE실': ['assets/images/tech2.png'],
+    'PLC실습실': ['assets/images/tech2.png'],
+
+    '개인미디어실': ['assets/images/tech5.png'],
+    '실감형콘텐츠운영실습실': ['assets/images/tech5.png'],
+    '세미나실': ['assets/images/tech5.png'],
+    '미디어편집실': ['assets/images/tech5.png'],
+    'AI융합프로젝트실습실': ['assets/images/tech5.png'],
+    '전자CAD실': ['assets/images/tech5.png'],
+    '기초전자실습실': ['assets/images/tech5.png'],
+    '미디어창작실습실': ['assets/images/tech5.png'],
+    '아이디어카페': ['assets/images/tech5.png'],
+    '융합디자인실습실': ['assets/images/tech5.png'],
+    '시제품창의개발실': ['assets/images/tech5.png'],
+
+    '콘트롤러실습실': ['assets/images/tech2.png'],
+    'CAD실습실': ['assets/images/tech2.png'],
+    '소그룹실': ['assets/images/tech5.png'],
+    '강의실': ['assets/images/tech5.png'],
+
+    '로비': ['assets/images/main_building.png'],
+    '행정실': ['assets/images/main_building.png'],
+  };
+
   @override
   void initState() {
     super.initState();
@@ -46,18 +95,27 @@ class _DetailScreenState extends State<DetailScreen>
   @override
   Widget build(BuildContext context) {
     final String view360Url = widget.space['view360Url'] ?? '';
+    final String spaceName = widget.space['name'] ?? '';
 
-    // 🔥 [수정] 이미지가 없으면 빈 리스트로 초기화 (없는 로컬 파일 강제 로드 금지)
+    // 🔥 [수정] 이미지 리스트 로딩 로직
     List<String> images = [];
-    if (widget.space['images'] != null &&
+
+    // 1. 코드(_localImageMap)에 등록된 리스트가 있는지 확인
+    if (_localImageMap.containsKey(spaceName)) {
+      images = _localImageMap[spaceName]!;
+    }
+    // 2. 없으면 DB에 있는 리스트 사용
+    else if (widget.space['images'] != null &&
         (widget.space['images'] as List).isNotEmpty) {
       images = List<String>.from(widget.space['images']);
-    } else if (widget.space['mainImageUrl'] != null &&
+    }
+    // 3. 그것도 없으면 DB 메인 이미지 사용
+    else if (widget.space['mainImageUrl'] != null &&
         widget.space['mainImageUrl'] != '') {
       images = [widget.space['mainImageUrl']];
     }
-    // 주의: 여기에 없는 assets/... 파일을 넣으면 에러가 납니다.
 
+    // 빈 문자열 제거
     if (images.isNotEmpty && images[0] == '') {
       images.removeAt(0);
     }
@@ -66,7 +124,7 @@ class _DetailScreenState extends State<DetailScreen>
       backgroundColor: Colors.white,
       appBar: AppBar(
         title: Text(
-          widget.space['name'] ?? '공간 상세',
+          spaceName,
           style: const TextStyle(
             color: Colors.black,
             fontWeight: FontWeight.bold,
@@ -152,19 +210,13 @@ class _DetailScreenState extends State<DetailScreen>
   }
 
   Widget _buildDetailTab(List<String> images, String view360Url) {
-    // 🔥 [수정] 수용 인원 텍스트 처리 로직
     String capacityText;
     var rawCapacity = widget.space['capacity'];
-
-    // 데이터가 null이면 '0'
     String capacityStr = rawCapacity?.toString() ?? '0';
 
-    // 숫자로 변환 가능한지 확인 (예: "30" -> 가능, "정보 없음" -> 불가능)
     if (int.tryParse(capacityStr) != null) {
-      // 숫자라면 "명 수용" 붙이기
       capacityText = "$capacityStr명 수용";
     } else {
-      // 숫자가 아니면(문자면) 그냥 그대로 표시
       capacityText = capacityStr;
     }
 
@@ -173,7 +225,7 @@ class _DetailScreenState extends State<DetailScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            height: 350,
+            height: 300, // 이미지 높이
             width: double.infinity,
             child: images.isNotEmpty
                 ? Stack(
@@ -188,32 +240,30 @@ class _DetailScreenState extends State<DetailScreen>
                         },
                         itemBuilder: (context, index) {
                           final imageUrl = images[index];
-                          // 🔥 [수정] 네트워크 이미지 에러 처리 추가
+                          // 인터넷/로컬 구분
                           if (imageUrl.startsWith('http')) {
                             return Image.network(
                               imageUrl,
                               fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Container(
-                                  color: Colors.grey[200],
-                                  child: const Center(
-                                    child: Icon(Icons.broken_image,
-                                        size: 50, color: Colors.grey),
-                                  ),
-                                );
-                              },
+                              errorBuilder: (context, error, stackTrace) =>
+                                  Container(
+                                      color: Colors.grey[200],
+                                      child: const Icon(Icons.broken_image)),
                             );
                           } else {
-                            // 로컬 이미지는 try-catch가 안되므로 파일이 확실할 때만 써야 함
-                            // 여기서는 안전하게 네트워크 이미지가 아니면 기본 박스 처리
-                            return Container(
-                                color: Colors.grey[200],
-                                child: const Center(
-                                    child: Icon(Icons.image,
-                                        size: 50, color: Colors.grey)));
+                            return Image.asset(
+                              imageUrl,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  Container(
+                                      color: Colors.grey[200],
+                                      child: const Icon(
+                                          Icons.image_not_supported)),
+                            );
                           }
                         },
                       ),
+                      // 페이지 인디케이터 (점이 3개 나옴)
                       if (images.length > 1)
                         Positioned(
                           bottom: 16,
@@ -288,7 +338,7 @@ class _DetailScreenState extends State<DetailScreen>
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
-                        capacityText, // 🔥 [수정됨] 안전하게 처리된 텍스트 사용
+                        capacityText,
                         style: const TextStyle(
                           color: Colors.blue,
                           fontWeight: FontWeight.bold,
@@ -356,7 +406,6 @@ class _DetailScreenState extends State<DetailScreen>
     );
   }
 
-  // 🔥 리뷰 탭
   Widget _buildReviewTab() {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
