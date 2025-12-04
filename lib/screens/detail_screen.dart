@@ -47,14 +47,16 @@ class _DetailScreenState extends State<DetailScreen>
   Widget build(BuildContext context) {
     final String view360Url = widget.space['view360Url'] ?? '';
 
-    final List<String> images = widget.space['images'] != null
-        ? List<String>.from(widget.space['images'])
-        : [
-            widget.space['image'] ?? widget.space['mainImageUrl'] ?? '',
-            "assets/images/conference.jpg",
-            "assets/images/lab.jpg",
-            "assets/images/class2.jpg",
-          ];
+    // 🔥 [수정] 이미지가 없으면 빈 리스트로 초기화 (없는 로컬 파일 강제 로드 금지)
+    List<String> images = [];
+    if (widget.space['images'] != null &&
+        (widget.space['images'] as List).isNotEmpty) {
+      images = List<String>.from(widget.space['images']);
+    } else if (widget.space['mainImageUrl'] != null &&
+        widget.space['mainImageUrl'] != '') {
+      images = [widget.space['mainImageUrl']];
+    }
+    // 주의: 여기에 없는 assets/... 파일을 넣으면 에러가 납니다.
 
     if (images.isNotEmpty && images[0] == '') {
       images.removeAt(0);
@@ -150,6 +152,22 @@ class _DetailScreenState extends State<DetailScreen>
   }
 
   Widget _buildDetailTab(List<String> images, String view360Url) {
+    // 🔥 [수정] 수용 인원 텍스트 처리 로직
+    String capacityText;
+    var rawCapacity = widget.space['capacity'];
+
+    // 데이터가 null이면 '0'
+    String capacityStr = rawCapacity?.toString() ?? '0';
+
+    // 숫자로 변환 가능한지 확인 (예: "30" -> 가능, "정보 없음" -> 불가능)
+    if (int.tryParse(capacityStr) != null) {
+      // 숫자라면 "명 수용" 붙이기
+      capacityText = "$capacityStr명 수용";
+    } else {
+      // 숫자가 아니면(문자면) 그냥 그대로 표시
+      capacityText = capacityStr;
+    }
+
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -170,10 +188,29 @@ class _DetailScreenState extends State<DetailScreen>
                         },
                         itemBuilder: (context, index) {
                           final imageUrl = images[index];
+                          // 🔥 [수정] 네트워크 이미지 에러 처리 추가
                           if (imageUrl.startsWith('http')) {
-                            return Image.network(imageUrl, fit: BoxFit.cover);
+                            return Image.network(
+                              imageUrl,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  color: Colors.grey[200],
+                                  child: const Center(
+                                    child: Icon(Icons.broken_image,
+                                        size: 50, color: Colors.grey),
+                                  ),
+                                );
+                              },
+                            );
                           } else {
-                            return Image.asset(imageUrl, fit: BoxFit.cover);
+                            // 로컬 이미지는 try-catch가 안되므로 파일이 확실할 때만 써야 함
+                            // 여기서는 안전하게 네트워크 이미지가 아니면 기본 박스 처리
+                            return Container(
+                                color: Colors.grey[200],
+                                child: const Center(
+                                    child: Icon(Icons.image,
+                                        size: 50, color: Colors.grey)));
                           }
                         },
                       ),
@@ -251,7 +288,7 @@ class _DetailScreenState extends State<DetailScreen>
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
-                        "${widget.space['capacity'] ?? 0}명 수용",
+                        capacityText, // 🔥 [수정됨] 안전하게 처리된 텍스트 사용
                         style: const TextStyle(
                           color: Colors.blue,
                           fontWeight: FontWeight.bold,
@@ -319,7 +356,7 @@ class _DetailScreenState extends State<DetailScreen>
     );
   }
 
-  // 🔥 리뷰 탭 (orderBy 제거 버전)
+  // 🔥 리뷰 탭
   Widget _buildReviewTab() {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
@@ -345,7 +382,6 @@ class _DetailScreenState extends State<DetailScreen>
           );
         }
 
-        // 🔥 Dart에서 정렬
         final reviews = snapshot.data!.docs;
         reviews.sort((a, b) {
           final aTime = (a.data() as Map)['createdAt'] as Timestamp?;
@@ -409,7 +445,7 @@ class _DetailScreenState extends State<DetailScreen>
                           Icons.star,
                           size: 18,
                           color: starIndex < rating
-                              ? const Color(0xFF4282CB)
+                              ? const Color(0xFFFFC107)
                               : Colors.grey[300],
                         );
                       }),
@@ -430,7 +466,6 @@ class _DetailScreenState extends State<DetailScreen>
   }
 }
 
-// 🔥 _FacilityIcon 클래스를 밖으로 빼냄! (이게 핵심!)
 class _FacilityIcon extends StatelessWidget {
   final IconData icon;
   final String label;

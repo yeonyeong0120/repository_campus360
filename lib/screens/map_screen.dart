@@ -1,10 +1,11 @@
 // lib/screens/map_screen.dart
+
 import 'dart:async'; // Completer
 import 'package:google_maps_flutter/google_maps_flutter.dart'; // 구글맵 패키지
 import 'package:flutter/material.dart';
 import 'package:repository_campus360/consts/campus_markers.dart';
 import 'search_screen.dart'; // 검색결과랑 연결
-import 'detail_screen.dart'; // 🌟 [필수] 상세 화면 연결
+import 'detail_screen.dart'; // 상세 화면 연결
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -14,30 +15,29 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
-  // 구글맵 컨트롤러 (지도를 코드로 움직일 때 사용)
+  // 구글맵 컨트롤러
   final Completer<GoogleMapController> _controller = Completer();
 
-  // 🏫 학교 중심 좌표 (한국폴리텍대학 인천캠퍼스 본관 근처)
+  // 🏫 학교 중심 좌표
   static const CameraPosition _kSchoolCenter = CameraPosition(
     target: LatLng(37.478624, 126.754742),
-    zoom: 17.5, // 줌 레벨 (숫자가 클수록 확대)
+    zoom: 17.5,
   );
 
-  // 📍 마커(핀) 목록을 저장할 변수
+  // 📍 마커(핀) 목록
   Set<Marker> _markers = {};
 
-  // 필터용 변수 (기존 유지)
+  // 필터용 변수
   double _peopleCount = 10.0;
 
   @override
   void initState() {
     super.initState();
-    _createMarkers(); // 앱 시작 시 마커 생성
+    _createMarkers();
   }
 
-  // 📍 마커 생성 함수 (좌표는 구글맵에서 찍어서 확인 필요!)
+  // 📍 마커 생성 함수
   void _createMarkers() {
-    // 1. 일반 건물 마커들 (campusMarkerData 리스트를 반복해서 마커로 변환)
     final buildingMarkers = campusMarkerData.map((info) {
       final bool isGreen = ['학교 정문', '폴90도 (카페)'].contains(info.title);
       final bool isNonClickable =
@@ -50,14 +50,11 @@ class _MapScreenState extends State<MapScreen> {
         icon: isGreen
             ? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen)
             : BitmapDescriptor.defaultMarker,
-
-        // 🚫 조건에 따라 클릭 이벤트 끄기 (null이면 아무 동작 안 함)
         onTap: isNonClickable ? null : () => _showBuildingDetail(info.title),
       );
     }).toSet();
 
     setState(() {
-      // 두 세트를 합친거 대입
       _markers = buildingMarkers;
     });
   }
@@ -70,29 +67,15 @@ class _MapScreenState extends State<MapScreen> {
         children: [
           // 🗺️ 구글맵 영역
           GoogleMap(
-            mapType: MapType.normal, // 일반 지도 (satellite: 위성)
-            initialCameraPosition: _kSchoolCenter, // 시작 위치
-            markers: _markers, // 마커 표시
-            zoomControlsEnabled: false, // 줌 버튼 숨김 (깔끔하게)
-            myLocationEnabled: true, // 내 위치 표시 (권한 필요)
-            myLocationButtonEnabled: false, // 내 위치로 가기 버튼 숨김 (커스텀 버튼 사용)
+            mapType: MapType.normal,
+            initialCameraPosition: _kSchoolCenter,
+            markers: _markers,
+            zoomControlsEnabled: false,
+            myLocationEnabled: true,
+            myLocationButtonEnabled: false,
             onMapCreated: (GoogleMapController controller) {
               _controller.complete(controller);
             },
-          ),
-
-          // 🔍 필터 버튼 (우측 상단)
-          Positioned(
-            top: 20,
-            right: 20,
-            child: FloatingActionButton(
-              heroTag: 'filter',
-              mini: true,
-              backgroundColor: Colors.white,
-              foregroundColor: const Color(0xFF16366D),
-              onPressed: () => _showFilterModal(context),
-              child: const Icon(Icons.filter_list_alt),
-            ),
           ),
 
           // 🎯 학교 중심으로 돌아오기 버튼 (우측 하단)
@@ -115,15 +98,14 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-  // 학교 중심으로 카메라 이동
   Future<void> _goToSchoolCenter() async {
     final GoogleMapController controller = await _controller.future;
     controller.animateCamera(CameraUpdate.newCameraPosition(_kSchoolCenter));
   }
 
-  // 👇 기존 로직 그대로 유지 (바텀 시트) 👇
+  // 👇 바텀 시트 (강의실 목록)
   void _showBuildingDetail(String buildingName) {
-    // 🌟 [데이터] 사용자님께서 요청하신 모든 기술관 데이터 적용
+    // 🌟 [데이터] 기술관 데이터
     final Map<String, List<Map<String, dynamic>>> localBuildingData = {
       "하이테크관": [
         {
@@ -206,7 +188,6 @@ class _MapScreenState extends State<MapScreen> {
       ],
     };
 
-    // 맵 데이터 가져오기
     final floors = localBuildingData[buildingName] ?? [];
 
     showModalBottomSheet(
@@ -244,18 +225,16 @@ class _MapScreenState extends State<MapScreen> {
                       fontWeight: FontWeight.bold,
                       color: Colors.grey)),
 
-              // 🌟 [수정] 층별 데이터가 없으면 안내 문구 표시
               if (floors.isEmpty)
                 const Padding(
                   padding: EdgeInsets.all(20),
                   child: Center(child: Text("등록된 강의실 정보가 없습니다.")),
                 )
               else
-                // 🌟 [수정] 각 층의 대표(첫 번째) 강의실을 리스트로 표시
                 ...floors.map((floorData) {
                   final floor = floorData['floor'] as String;
                   final rooms = floorData['rooms'] as List<String>;
-                  final recommendedRoom = rooms.first; // 첫 번째 방을 추천
+                  final recommendedRoom = rooms.first;
 
                   return ListTile(
                     contentPadding: EdgeInsets.zero,
@@ -271,14 +250,14 @@ class _MapScreenState extends State<MapScreen> {
                     trailing: const Icon(Icons.arrow_forward_ios,
                         size: 14, color: Colors.grey),
                     onTap: () {
-                      // 🌟 [수정] 추천 강의실 클릭 -> DetailScreen (상세 정보) 이동
                       Navigator.pop(context);
 
-                      // DetailScreen으로 넘길 데이터 (DB 조회 전 임시 데이터 구조)
+                      // 🔥 [수정] DetailScreen으로 넘길 임시 데이터
                       final spaceData = {
                         'name': recommendedRoom,
                         'location': '$buildingName $floor',
-                        'capacity': '정보 없음',
+                        'capacity': '0', // "정보 없음" 대신 '0'을 보내 DetailScreen에서 처리
+                        'mainImageUrl': '', // 빈 이미지
                       };
 
                       Navigator.push(
@@ -291,7 +270,7 @@ class _MapScreenState extends State<MapScreen> {
 
               const SizedBox(height: 20),
 
-              // 🌟 [수정] 전체 보기 클릭 -> SearchScreen (목록/검색) 이동
+              // 🌟 전체 보기 클릭 -> SearchScreen (목록) 이동
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -318,7 +297,6 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-  // 바텀 시트 보여주는 메서드
   void _showFilterModal(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -346,7 +324,6 @@ class _MapScreenState extends State<MapScreen> {
                     ],
                   ),
                   const SizedBox(height: 20),
-                  // 필터 칩들
                   const Row(children: [
                     Chip(
                         label: Text("Wi-Fi"),
@@ -367,16 +344,13 @@ class _MapScreenState extends State<MapScreen> {
                     onChanged: (val) => setModalState(() => _peopleCount = val),
                   ),
                   const Spacer(),
-                  // 결과 보기 버튼
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () {
-                        Navigator.pop(context); // 창 닫기
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (_) => const SearchScreen())); // 이동!
+                        Navigator.pop(context);
+                        Navigator.push(context,
+                            MaterialPageRoute(builder: (_) => SearchScreen()));
                       },
                       style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.blue,

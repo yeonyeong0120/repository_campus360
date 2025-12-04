@@ -1,13 +1,14 @@
-// lib/screens/search_screen.dart
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'detail_screen.dart';
 
 class SearchScreen extends StatefulWidget {
-  // MapScreen에서 검색어를 받기 위해 인수를 추가합니다.
   final String? initialQuery;
 
-  const SearchScreen({super.key, this.initialQuery});
+  const SearchScreen({
+    super.key,
+    this.initialQuery,
+  });
 
   @override
   State<SearchScreen> createState() => _SearchScreenState();
@@ -16,7 +17,7 @@ class SearchScreen extends StatefulWidget {
 class _SearchScreenState extends State<SearchScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchText = "";
-  late final bool _isInitialFilterActive; // 초기 필터 상태를 저장
+  late final bool _isInitialFilterActive;
 
   @override
   void initState() {
@@ -24,7 +25,7 @@ class _SearchScreenState extends State<SearchScreen> {
     if (widget.initialQuery != null) {
       _searchText = widget.initialQuery!;
       _searchController.text = widget.initialQuery!;
-      _isInitialFilterActive = true; // 초기 쿼리가 있으면 필터 활성화
+      _isInitialFilterActive = true;
     } else {
       _isInitialFilterActive = false;
     }
@@ -46,7 +47,7 @@ class _SearchScreenState extends State<SearchScreen> {
         iconTheme: const IconThemeData(color: Colors.black),
         title: TextField(
           controller: _searchController,
-          autofocus: !_isInitialFilterActive, // 초기 필터 활성화 시 자동 포커스 끄기
+          autofocus: !_isInitialFilterActive,
           decoration: const InputDecoration(
             hintText: "강의실 이름 검색 (예: 컨퍼런스룸)",
             border: InputBorder.none,
@@ -56,8 +57,6 @@ class _SearchScreenState extends State<SearchScreen> {
           onChanged: (value) {
             setState(() {
               _searchText = value;
-              // 사용자가 텍스트를 건드리면 초기 필터 상태는 해제됩니다.
-              // _isInitialFilterActive = false; // 이 로직은 StreamBuilder 내부에서 처리
             });
           },
         ),
@@ -68,7 +67,6 @@ class _SearchScreenState extends State<SearchScreen> {
               _searchController.clear();
               setState(() {
                 _searchText = "";
-                // 검색창을 지우면 전체 목록을 보여주기 위해 필터 해제 상태로 간주
               });
             },
           ),
@@ -90,33 +88,29 @@ class _SearchScreenState extends State<SearchScreen> {
 
           final docs = snapshot.data!.docs.where((doc) {
             final data = doc.data() as Map<String, dynamic>;
-            final name = data['name'].toString().toLowerCase();
-            final location = data['location'].toString().toLowerCase();
+            final name = (data['name'] ?? '').toString().toLowerCase();
+            final location = (data['location'] ?? '').toString().toLowerCase();
 
-            // 🌟 [수정된 필터링 로직]
+            // 🔥 건물명 필터 (initialQuery가 있을 때)
+            if (_isInitialFilterActive && widget.initialQuery != null) {
+              final queryLower = widget.initialQuery!.toLowerCase();
+              return location.contains(queryLower);
+            }
 
-            // 1. 검색어가 비어 있으면 모든 문서를 반환 (가장 넓은 범위의 '전체 보기')
+            // 검색어가 비어 있으면 모두 표시
             if (searchLower.isEmpty) {
               return true;
             }
 
-            // 2. 초기 쿼리 (건물 이름)가 현재 검색 텍스트와 같고, 사용자가 텍스트를 수정하지 않은 상태라면
-            //    -> 이 경우는 'ㅇㅇ관 전체 공간 보기' 링크를 눌렀을 때이며, **위치(location)에만 필터를 적용**합니다.
-            if (_isInitialFilterActive &&
-                _searchController.text == widget.initialQuery) {
-              return location.contains(searchLower);
-            }
-
-            // 3. 그 외의 경우 (사용자가 능동적으로 검색어를 입력/수정했을 때)
-            //    -> 이름 또는 위치에 검색어가 포함될 경우 true 반환 (일반적인 검색)
+            // 일반 검색 (이름 또는 위치에 검색어 포함)
             return name.contains(searchLower) || location.contains(searchLower);
           }).toList();
 
           if (docs.isEmpty) {
-            // 초기 쿼리가 적용된 상태라면 "검색 결과" 대신 "해당 건물에 등록된 공간" 메시지 표시
-            final emptyMessage = _isInitialFilterActive
-                ? "${widget.initialQuery}에 등록된 공간이 없습니다."
-                : "검색 결과가 없습니다.";
+            final emptyMessage =
+                _isInitialFilterActive && widget.initialQuery != null
+                    ? "${widget.initialQuery}에 등록된 공간이 없습니다."
+                    : "조건에 맞는 검색 결과가 없습니다.";
 
             return Center(child: Text(emptyMessage));
           }
@@ -131,6 +125,10 @@ class _SearchScreenState extends State<SearchScreen> {
 
               final spaceData = Map<String, dynamic>.from(data);
               spaceData['docId'] = doc.id;
+
+              String rawCapacity = (data['capacity'] ?? '0').toString();
+              String displayCapacity =
+                  rawCapacity.replaceAll(RegExp(r'[^0-9]'), '');
 
               return Container(
                 decoration: BoxDecoration(
@@ -167,7 +165,7 @@ class _SearchScreenState extends State<SearchScreen> {
                         fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                   subtitle: Text(
-                    "${data['location'] ?? '-'} | ${data['capacity'] ?? '-'}명",
+                    "${data['location'] ?? '-'} | ${displayCapacity}명",
                     style: TextStyle(color: Colors.grey[600], fontSize: 13),
                   ),
                   trailing: const Icon(Icons.chevron_right, color: Colors.grey),

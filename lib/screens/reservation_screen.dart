@@ -1,13 +1,10 @@
 // lib/screens/reservation_screen.dart
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
-import 'package:intl/intl.dart'; // 날짜 포맷팅용
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:provider/provider.dart';
-import '../providers/user_provider.dart';
+import 'reservation_form_screen.dart'; // 두 번째 페이지 import
 
 class ReservationScreen extends StatefulWidget {
-  final Map<String, dynamic> space; // 어떤 강의실을 예약하는지
+  final Map<String, dynamic> space; // 강의실 정보
 
   const ReservationScreen({super.key, required this.space});
 
@@ -16,12 +13,14 @@ class ReservationScreen extends StatefulWidget {
 }
 
 class _ReservationScreenState extends State<ReservationScreen> {
-  // 1. 달력 관련 변수들
+  // 1. 달력 관련 변수
   CalendarFormat _calendarFormat = CalendarFormat.month;
   DateTime _focusedDay = DateTime.now();
-  DateTime? _selectedDay; // 선택된 날짜
 
-  // 2. 시간 선택 관련 변수들
+  // 💡 [수정됨] 앱 시작 시 오늘 날짜가 기본으로 선택되도록 초기화
+  DateTime? _selectedDay = DateTime.now();
+
+  // 2. 시간 선택 관련 변수
   final List<String> _timeSlots = [
     "09:00 ~ 11:00",
     "11:00 ~ 13:00",
@@ -29,176 +28,225 @@ class _ReservationScreenState extends State<ReservationScreen> {
     "15:00 ~ 17:00",
     "17:00 ~ 19:00",
   ];
-  String? _selectedTime; // 선택된 시간
+  String? _selectedTime;
 
-  // 3. 예약 저장 함수
-  void _handleReserve() async {
+  // 다음 단계로 이동하는 함수
+  void _goToNextStep() {
     if (_selectedDay == null || _selectedTime == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("날짜와 시간을 모두 선택해주세요.")),
+        const SnackBar(
+          content: Text("날짜와 시간을 모두 선택해주세요."),
+          duration: Duration(seconds: 1), // 1초 뒤 사라짐
+        ),
       );
       return;
     }
 
-    // 로그인한 유저 정보 가져오기
-    final user = context.read<UserProvider>().currentUser;
-    if (user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("로그인 정보가 유효하지 않습니다. 다시 로그인해주세요.")),
-      );
-      return;
-    }
-
-    try {
-      // 💡 선택한 시간 문자열 파싱 및 Timestamp 계산
-      final timeParts = _selectedTime!.split(' ~ ');
-      final startTimeStr = timeParts[0]; // 예: "09:00"
-      final endTimeStr = timeParts[1]; // 예: "11:00"
-
-      // 시작 시간 (DateTime 객체) 생성
-      final startHour = int.parse(startTimeStr.split(':')[0]);
-      final startMinute = int.parse(startTimeStr.split(':')[1]);
-      final startTimeDateTime = DateTime(_selectedDay!.year,
-          _selectedDay!.month, _selectedDay!.day, startHour, startMinute);
-
-      // 종료 시간 (DateTime 객체) 생성
-      final endHour = int.parse(endTimeStr.split(':')[0]);
-      final endMinute = int.parse(endTimeStr.split(':')[1]);
-      final endTimeDateTime = DateTime(_selectedDay!.year, _selectedDay!.month,
-          _selectedDay!.day, endHour, endMinute);
-
-      String dateString = DateFormat('yyyy-MM-dd').format(_selectedDay!);
-
-      // DB 'reservations' 컬렉션에 저장
-      await FirebaseFirestore.instance.collection('reservations').add({
-        'userId': user.uid,
-        'userName': user.name,
-        'spaceId':
-            widget.space['name'], // Firestore 문서 ID를 저장하는 것이 좋지만, 일단 이름 유지
-        'spaceName': widget.space['name'],
-        'date': dateString,
-        'timeSlot': _selectedTime,
-        'status': 'pending',
-        // 💡💡💡 최종 수정: DateTime 객체를 명시적으로 Timestamp로 변환하여 저장
-        // 이 필드가 누락되거나 타입이 잘못되어 홈 화면 조회가 실패했습니다.
-        'startTime': Timestamp.fromDate(startTimeDateTime),
-        'endTime': Timestamp.fromDate(endTimeDateTime),
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-
-      if (mounted) {
-        // 성공 알림 -> 홈으로 이동
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("예약 신청이 완료되었습니다!")),
-        );
-        // 메인 화면으로 돌아가 최근 예약 기록을 확인하도록 유도
-        Navigator.of(context).popUntil((route) => route.isFirst);
-      }
-    } catch (e) {
-      if (mounted) {
-        // 오류 발생했을때 머가 문제인지 정확하게
-        String errorMessage = "알 수 없는 예약 실패 오류";
-        if (e is FirebaseException) {
-          errorMessage = "Firebase 오류: ${e.message}";
-        } else {
-          errorMessage = "예약 실패: $e";
-        }
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMessage)),
-        );
-      }
-    }
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ReservationFormScreen(
+          space: widget.space,
+          selectedDay: _selectedDay!,
+          selectedTime: _selectedTime!,
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    // ... (build 메서드 내용 동일) ...
     return Scaffold(
-      appBar: AppBar(title: Text("${widget.space['name']} 예약")),
+      backgroundColor: const Color(0xFFF5F5F5), // 배경: 아주 연한 회색
+      appBar: AppBar(
+        title: Text(
+          "${widget.space['name']} 예약",
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+        ),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 0,
+        centerTitle: true,
+      ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 1. 달력 (TableCalendar)
-            const Text("날짜 선택",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 10),
-            TableCalendar(
-              locale: 'ko_KR', // 한국어 달력 (main.dart에서 설정 필요, 일단 기본값 사용)
-              firstDay: DateTime.now(),
-              lastDay: DateTime.utc(2030, 3, 14),
-              focusedDay: _focusedDay,
-              calendarFormat: _calendarFormat,
-              selectedDayPredicate: (day) {
-                return isSameDay(_selectedDay, day);
-              },
-              onDaySelected: (selectedDay, focusedDay) {
-                setState(() {
-                  _selectedDay = selectedDay;
-                  _focusedDay = focusedDay;
-                });
-              },
-              onFormatChanged: (format) {
-                setState(() {
-                  _calendarFormat = format;
-                });
-              },
-              headerStyle: const HeaderStyle(
-                formatButtonVisible: false, // 2주/월 보기 버튼 숨김
-                titleCentered: true,
+            // 1. 달력 섹션 (카드 디자인)
+            _buildSectionTitle("날짜 선택"),
+            const SizedBox(height: 12),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.fromLTRB(10, 5, 10, 15),
+              child: TableCalendar(
+                locale: 'ko_KR',
+                firstDay: DateTime.now(),
+                lastDay: DateTime.utc(2030, 12, 31),
+                focusedDay: _focusedDay,
+                calendarFormat: _calendarFormat,
+                selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+                onDaySelected: (selectedDay, focusedDay) {
+                  setState(() {
+                    _selectedDay = selectedDay;
+                    _focusedDay = focusedDay;
+                    // 💡 [수정됨] 날짜를 바꿔도 선택한 시간이 사라지지 않도록 초기화 코드 삭제
+                    // _selectedTime = null;
+                  });
+                },
+                onFormatChanged: (format) {
+                  setState(() {
+                    _calendarFormat = format;
+                  });
+                },
+                headerStyle: const HeaderStyle(
+                  formatButtonVisible: false,
+                  titleCentered: true,
+                  titleTextStyle:
+                      TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                  leftChevronIcon: Icon(Icons.chevron_left, color: Colors.grey),
+                  rightChevronIcon:
+                      Icon(Icons.chevron_right, color: Colors.grey),
+                ),
+                calendarStyle: CalendarStyle(
+                  selectedDecoration: BoxDecoration(
+                    color: Colors.blue[800], // 학교 상징색
+                    shape: BoxShape.circle,
+                  ),
+                  todayDecoration: BoxDecoration(
+                    color: Colors.blue[100],
+                    shape: BoxShape.circle,
+                  ),
+                  todayTextStyle: TextStyle(color: Colors.blue[800]),
+                ),
               ),
             ),
 
             const SizedBox(height: 30),
 
-            // 2. 시간 선택 (Chips)
-            const Text("시간 선택",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 10.0,
-              runSpacing: 10.0,
-              children: _timeSlots.map((time) {
+            // 2. 시간 선택 섹션 (Grid Layout 적용)
+            _buildSectionTitle("이용 시간 선택"),
+            const SizedBox(height: 12),
+
+            GridView.builder(
+              shrinkWrap: true, // 스크롤 뷰 안에서 크기 오류 방지
+              physics:
+                  const NeverScrollableScrollPhysics(), // 스크롤 금지 (전체 스크롤 사용)
+              itemCount: _timeSlots.length,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3, // 한 줄에 3개
+                childAspectRatio: 2.4, // 버튼 비율 (가로/세로)
+                crossAxisSpacing: 8, // 가로 간격
+                mainAxisSpacing: 8, // 세로 간격
+              ),
+              itemBuilder: (context, index) {
+                final time = _timeSlots[index];
                 final isSelected = _selectedTime == time;
-                return ChoiceChip(
-                  label: Text(time),
-                  selected: isSelected,
-                  selectedColor: Colors.blue,
-                  labelStyle: TextStyle(
-                    color: isSelected ? Colors.white : Colors.black,
-                    fontWeight:
-                        isSelected ? FontWeight.bold : FontWeight.normal,
-                  ),
-                  onSelected: (selected) {
+
+                return GestureDetector(
+                  onTap: () {
                     setState(() {
-                      _selectedTime = selected ? time : null;
+                      _selectedTime = isSelected ? null : time;
                     });
                   },
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: isSelected ? Colors.blue[800] : Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: isSelected
+                            ? Colors.blue[800]!
+                            : Colors.grey.withValues(alpha: 0.3),
+                        width: 1.5,
+                      ),
+                      boxShadow: isSelected
+                          ? [
+                              BoxShadow(
+                                color: Colors.blue.withValues(alpha: 0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
+                              )
+                            ]
+                          : [],
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      time,
+                      style: TextStyle(
+                        color: isSelected ? Colors.white : Colors.grey[700],
+                        fontWeight:
+                            isSelected ? FontWeight.bold : FontWeight.w500,
+                        fontSize: 12.5, // 3칸 배치에 맞춰 글자 크기 조정
+                      ),
+                    ),
+                  ),
                 );
-              }).toList(),
+              },
             ),
 
-            const SizedBox(height: 50),
+            const SizedBox(height: 40),
 
-            // 3. 예약하기 버튼
+            // 3. 다음 버튼
             SizedBox(
               width: double.infinity,
+              height: 56,
               child: ElevatedButton(
-                onPressed: _handleReserve,
+                onPressed: _goToNextStep,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
+                  backgroundColor: _selectedTime != null && _selectedDay != null
+                      ? Colors.blue[800]
+                      : Colors.grey[300], // 선택 안되면 회색 처리
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 15),
-                  textStyle: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
-                child: const Text("예약 신청하기"),
+                child: const Text(
+                  "다음 단계",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  // 섹션 제목 스타일 위젯
+  Widget _buildSectionTitle(String title) {
+    return Row(
+      children: [
+        Container(
+          width: 4,
+          height: 18,
+          margin: const EdgeInsets.only(right: 8),
+          decoration: BoxDecoration(
+            color: Colors.blue[800],
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
+        ),
+      ],
     );
   }
 }
