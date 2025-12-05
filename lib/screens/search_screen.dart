@@ -195,7 +195,7 @@ class _SearchScreenState extends State<SearchScreen> {
                         fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                   subtitle: Text(
-                    "${data['location'] ?? '-'} | ${displayCapacity}명",
+                    "${data['location'] ?? '-'} | $displayCapacity명",
                     style: TextStyle(color: Colors.grey[600], fontSize: 13),
                   ),
                   trailing: const Icon(Icons.chevron_right, color: Colors.grey),

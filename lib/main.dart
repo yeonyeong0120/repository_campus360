@@ -7,6 +7,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart'; // 🌟 [추가됨] .env 파일 로드용 패키지
 import 'screens/splash_screen.dart'; // 스플래시
+import 'firebase_options.dart'; // 🌟 [핵심 추가] 파이어베이스 설정 파일 가져오기
 
 void main() async {
   // Firebase가 네이티브 코드를 먼저 초기화
@@ -19,7 +20,11 @@ void main() async {
   await dotenv.load(fileName: ".env");
 
   // Firebase 앱 초기화
-  await Firebase.initializeApp();
+  // 🌟 [수정] options를 넣어줘야 앱이 어떤 파이어베이스 프로젝트인지 정확히 알고 연결합니다.
+  // 이게 없으면 연결 대기 상태에서 앱이 멈출 수 있습니다.
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   runApp(
     ChangeNotifierProvider(
