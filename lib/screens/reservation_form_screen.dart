@@ -278,7 +278,7 @@ class _ReservationFormScreenState extends State<ReservationFormScreen> {
                   const Divider(height: 40),
 
                   // 4. 필요 기자재
-                  const Text("필요 기자재 (선택)",
+                  const Text("필요 장비 (선택)",
                       style:
                           TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
 

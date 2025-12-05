@@ -94,12 +94,19 @@ class _ReservationApprovalList extends StatelessWidget {
   // [기능] 상세 정보 보기 다이얼로그
   void _showDetailInfo(
       BuildContext context, Map<String, dynamic> data, String docId) {
-    // 🔥 예약 문서에서 직접 가져오는 데이터 (FormScreen에서 저장한 키 값)
+    // 🔥 예약 문서에서 직접 가져오는 데이터
     String timeDisplay = data['timeSlot'] ?? '시간 정보 없음';
     String userId = data['userId'] ?? '';
-    String purpose = data['purpose'] ?? '내용 없음'; // FormScreen 키: 'purpose'
-    String contact = data['contact'] ?? '정보 없음'; // FormScreen 키: 'contact'
-    int headCount = data['headCount'] ?? 1; // FormScreen 키: 'headCount'
+    String purpose = data['purpose'] ?? '내용 없음';
+    String contact = data['contact'] ?? '정보 없음';
+    int headCount = data['headCount'] ?? 1;
+
+    // 🌟 [추가] 기자재 리스트 가져오기
+    // Firestore에는 List<dynamic> 형태로 저장되므로 변환 필요
+    List<dynamic> equipmentListRaw = data['equipment'] ?? [];
+    String equipmentText = equipmentListRaw.isEmpty
+        ? '선택 안함'
+        : equipmentListRaw.join(', '); // "빔 프로젝터, 마이크" 형태로 변환
 
     showDialog(
       context: context,
@@ -127,7 +134,10 @@ class _ReservationApprovalList extends StatelessWidget {
                 _buildDetailRow("날짜", data['date']),
                 _buildDetailRow("시간", timeDisplay),
                 _buildDetailRow("인원", "${headCount}명"),
-                _buildDetailRow("연락처", contact), // ✅ 수정된 키 사용
+                _buildDetailRow("연락처", contact),
+
+                // 🌟 [추가] 기자재 정보 표시
+                _buildDetailRow("필요 장비", equipmentText),
 
                 const Divider(height: 20),
 
@@ -135,8 +145,7 @@ class _ReservationApprovalList extends StatelessWidget {
                 const Text("신청 사유",
                     style: TextStyle(color: Colors.grey, fontSize: 12)),
                 const SizedBox(height: 4),
-                Text(purpose, // ✅ 수정된 키 사용
-                    style: const TextStyle(fontSize: 14)),
+                Text(purpose, style: const TextStyle(fontSize: 14)),
               ],
             ),
           ),
