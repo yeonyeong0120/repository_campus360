@@ -18,6 +18,8 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
+        // 🚨 수정: 홈 화면에 뒤로가기 버튼이 자동으로 생기는 것을 막습니다.
+        automaticallyImplyLeading: false,
         backgroundColor: Colors.white,
         elevation: 0,
         scrolledUnderElevation: 0,
@@ -159,12 +161,12 @@ class HomeScreen extends StatelessWidget {
       ),
       body: Column(
         children: const [
-          // 1. 배너 위젯
+          // 1. 배너 위젯 (사진 크기 증가: flex: 13)
           Expanded(
             flex: 13,
             child: HomeBannerWidget(),
           ),
-          // 2. 리뷰 리스트 위젯 (flex: 14로 수정하여 3개 리뷰가 온전히 보이도록 공간 확보)
+          // 2. 리뷰 리스트 위젯 (flex: 14 유지)
           Expanded(
             flex: 14,
             child: HomeReviewListWidget(),
@@ -628,7 +630,7 @@ class HomeReviewListWidget extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
-                      // 🚨 [수정] 닉네임과 시간 정보를 같은 Row에 배치하여 공간 절약
+                      // 🚨 닉네임과 시간 정보를 같은 Row에 배치하여 공간 절약
                       children: [
                         Text(
                           displayName,

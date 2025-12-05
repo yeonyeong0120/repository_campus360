@@ -330,7 +330,7 @@ class _ReservationDetailScreenState extends State<ReservationDetailScreen> {
                       _buildDetailRow("연락처", userContact),
                       _buildDetailRow("소속/학번", userOrg),
                       // 🔥 [추가] 인원수 표시
-                      _buildDetailRow("인원", "${participants}명"),
+                      _buildDetailRow("인원", "$participants명"),
 
                       _buildDetailRow("티켓 번호",
                           data['docId']?.substring(0, 8).toUpperCase() ?? '-'),

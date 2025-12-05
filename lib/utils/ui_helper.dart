@@ -7,7 +7,7 @@ class UiHelper {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        duration: const Duration(seconds: 1), // 💡 여기서 시간을 바꾸면 앱 전체가 다 바뀝니다!
+        duration: const Duration(seconds: 2), // 💡 여기서 시간을 바꾸면 앱 전체가 다 바뀝니다!
         behavior: SnackBarBehavior.floating, // 바닥에 붙지 않고 살짝 떠 있음
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10), // 둥근 모서리 디자인

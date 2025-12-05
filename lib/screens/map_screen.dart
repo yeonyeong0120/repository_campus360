@@ -30,6 +30,56 @@ class _MapScreenState extends State<MapScreen> {
   // 필터용 변수
   double _peopleCount = 10.0;
 
+  // 🔥 [핵심 추가] 전체 공간 데이터 (실제 상세 내역과 동일한 데이터베이스)
+  // 원래는 별도 파일(예: data/room_data.dart)에 있어야 하지만,
+  // 설명을 위해 여기에 포함했습니다. 이 데이터가 '정답지'입니다.
+  final List<Map<String, String>> _allSpacesDatabase = [
+    // ---------------- [하이테크관] ----------------
+    {'name': '디지털데이터활용실습실', 'capacity': '42', 'location': '하이테크관 3F'},
+    {'name': '강의실 2', 'capacity': '30', 'location': '하이테크관 3F'},
+    {'name': '컨퍼런스룸', 'capacity': '20', 'location': '하이테크관 2F'},
+    // ---------------- [1기술관] ----------------
+    {'name': 'CAD실습실', 'capacity': '36', 'location': '1기술관 2F'},
+    {'name': '콘트롤러실습실', 'capacity': '30', 'location': '1기술관 2F'},
+    // ---------------- [2기술관] ----------------
+    {'name': '자동차과이론강의실', 'capacity': '48', 'location': '2기술관 3F'},
+    {'name': 'PLC실습실', 'capacity': '24', 'location': '2기술관 3F'},
+    {'name': 'CAD/CAE실', 'capacity': '30', 'location': '2기술관 2F'},
+    {'name': 'CATIA실습실', 'capacity': '32', 'location': '2기술관 1F'},
+    {'name': '전기자동차실습실', 'capacity': '20', 'location': '2기술관 1F'},
+    // ---------------- [3기술관] ----------------
+    {'name': '아이디어 존', 'capacity': '15', 'location': '3기술관 1F'},
+    // ---------------- [5기술관] ----------------
+    {'name': '시제품창의개발실', 'capacity': '20', 'location': '5기술관 4F'},
+    {'name': '아이디어카페', 'capacity': '50', 'location': '5기술관 4F'},
+    {'name': '디자인워크샵실습실', 'capacity': '30', 'location': '5기술관 4F'},
+    {'name': '융합디자인실습실', 'capacity': '35', 'location': '5기술관 4F'},
+    {'name': '디지털디자인실습실', 'capacity': '30', 'location': '5기술관 4F'},
+    {'name': '미디어창작실습실', 'capacity': '25', 'location': '5기술관 4F'},
+    {'name': '강의실', 'capacity': '40', 'location': '5기술관 3F'},
+    {'name': '스터디룸', 'capacity': '8', 'location': '5기술관 3F'},
+    {'name': '반도체제어실', 'capacity': '30', 'location': '5기술관 3F'},
+    {'name': '전자CAD실', 'capacity': '35', 'location': '5기술관 3F'},
+    {'name': '기초전자실습실', 'capacity': '35', 'location': '5기술관 3F'},
+    {'name': 'AI융합프로젝트실습실', 'capacity': '40', 'location': '5기술관 2F'},
+    {'name': '인공지능프로그래밍실습실', 'capacity': '40', 'location': '5기술관 2F'},
+    {'name': 'ioT제어실습실', 'capacity': '30', 'location': '5기술관 2F'},
+    {'name': '개인미디어실', 'capacity': '4', 'location': '5기술관 1F'},
+    {'name': '세미나실', 'capacity': '15', 'location': '5기술관 1F'},
+    {'name': '미디어편집실', 'capacity': '20', 'location': '5기술관 1F'},
+    {'name': 'AR그래픽실', 'capacity': '25', 'location': '5기술관 1F'},
+    {'name': '실감형콘텐츠운영실습실', 'capacity': '30', 'location': '5기술관 1F'},
+    // ---------------- [6기술관] ----------------
+    {'name': '건축설계과', 'capacity': '60', 'location': '6기술관 1F'},
+    // ---------------- [7기술관] ----------------
+    {'name': '소그룹실', 'capacity': '8', 'location': '7기술관 3F'},
+    {'name': '강의실', 'capacity': '40', 'location': '7기술관 3F'},
+    {'name': '반도체 시스템 제작실', 'capacity': '25', 'location': '7기술관 3F'},
+    // ---------------- [대학 본관] ----------------
+    {'name': '로비', 'capacity': '100', 'location': '대학 본관 1F'},
+    {'name': '행정실', 'capacity': '20', 'location': '대학 본관 1F'},
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -73,15 +123,14 @@ class _MapScreenState extends State<MapScreen> {
             zoomControlsEnabled: false,
             myLocationEnabled: true,
             myLocationButtonEnabled: false,
-            // 🚨 수정: 지도 기본 UI 버튼 제거 (특수 문자 오류 없음)
-            mapToolbarEnabled: false, // 지도 도구 모음 버튼 (길찾기, 스트리트 뷰) 제거
-            compassEnabled: false, // 나침반 버튼 제거
+            mapToolbarEnabled: false,
+            compassEnabled: false,
             onMapCreated: (GoogleMapController controller) {
               _controller.complete(controller);
             },
           ),
 
-          // 🎯 학교 중심으로 돌아오기 버튼 (우측 하단)
+          // 🎯 학교 중심으로 돌아오기 버튼
           Positioned(
             bottom: 30,
             right: 20,
@@ -108,8 +157,9 @@ class _MapScreenState extends State<MapScreen> {
 
   // 👇 바텀 시트 (강의실 목록)
   void _showBuildingDetail(String buildingName) {
-    // 🌟 [데이터] 기술관 데이터
-    final Map<String, List<Map<String, dynamic>>> localBuildingData = {
+    // 🌟 1. 지도 바텀시트에 표시할 "목차(Index)" 데이터
+    // 여기에는 방 이름과 층수만 있으면 됩니다.
+    final Map<String, List<Map<String, dynamic>>> localBuildingIndex = {
       "하이테크관": [
         {
           'floor': '3F',
@@ -191,7 +241,7 @@ class _MapScreenState extends State<MapScreen> {
       ],
     };
 
-    final floors = localBuildingData[buildingName] ?? [];
+    final floors = localBuildingIndex[buildingName] ?? [];
 
     showModalBottomSheet(
       context: context,
@@ -237,7 +287,7 @@ class _MapScreenState extends State<MapScreen> {
                 ...floors.map((floorData) {
                   final floor = floorData['floor'] as String;
                   final rooms = floorData['rooms'] as List<String>;
-                  final recommendedRoom = rooms.first;
+                  final recommendedRoomName = rooms.first; // 이름만 가져옴
 
                   return ListTile(
                     contentPadding: EdgeInsets.zero,
@@ -249,18 +299,39 @@ class _MapScreenState extends State<MapScreen> {
                               color: Colors.blue,
                               fontWeight: FontWeight.bold)),
                     ),
-                    title: Text("$recommendedRoom (추천)"),
+                    title: Text("$recommendedRoomName (추천)"),
                     trailing: const Icon(Icons.arrow_forward_ios,
                         size: 14, color: Colors.grey),
                     onTap: () {
                       Navigator.pop(context);
 
-                      // 🔥 [수정] DetailScreen으로 넘길 임시 데이터
+                      // 🌟 2. [핵심 수정] 실제 데이터베이스(_allSpacesDatabase)에서 찾기!
+                      // "이름이 recommendedRoomName인 데이터를 찾아라"
+                      Map<String, String> foundData;
+                      try {
+                        foundData = _allSpacesDatabase.firstWhere(
+                          (element) => element['name'] == recommendedRoomName,
+                          // 만약 못 찾으면 기본값 제공 (안전장치)
+                          orElse: () => {
+                            'name': recommendedRoomName,
+                            'location': '$buildingName $floor',
+                            'capacity': '0' // 정보 없음
+                          },
+                        );
+                      } catch (e) {
+                        foundData = {
+                          'name': recommendedRoomName,
+                          'location': '$buildingName $floor',
+                          'capacity': '0'
+                        };
+                      }
+
+                      // 찾은 실제 데이터(capacity 포함)를 전달
                       final spaceData = {
-                        'name': recommendedRoom,
-                        'location': '$buildingName $floor',
-                        'capacity': '0', // "정보 없음" 대신 '0'을 보내 DetailScreen에서 처리
-                        'mainImageUrl': '', // 빈 이미지
+                        'name': foundData['name'],
+                        'location': foundData['location'], // DB에 있는 정확한 위치
+                        'capacity': foundData['capacity'], // 🔥 실제 수용 인원!
+                        'mainImageUrl': '',
                       };
 
                       Navigator.push(
@@ -273,7 +344,7 @@ class _MapScreenState extends State<MapScreen> {
 
               const SizedBox(height: 20),
 
-              // 🌟 전체 보기 클릭 -> SearchScreen (목록) 이동
+              // 전체 보기 버튼
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
