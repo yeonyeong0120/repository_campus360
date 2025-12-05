@@ -373,7 +373,7 @@ class _DetailScreenState extends State<DetailScreen>
                   ],
                 ),
 
-                const SizedBox(height: 55),
+                const SizedBox(height: 40),
 
                 // 🌟 [수정된 360도 뷰 버튼]
                 Padding(
