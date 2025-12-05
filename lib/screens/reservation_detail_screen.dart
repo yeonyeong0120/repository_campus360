@@ -1,11 +1,10 @@
-// lib/screens/reservation_detail_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 // Provider는 이제 굳이 안 써도 되지만, 혹시 모르니 남겨둡니다.
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
+// 💡 [삭제] webview_screen import 제거
 
 class ReservationDetailScreen extends StatefulWidget {
   final Map<String, dynamic> reservation;
@@ -68,7 +67,7 @@ class _ReservationDetailScreenState extends State<ReservationDetailScreen> {
     }
   }
 
-  // 2. 리뷰 등록/수정 (🔥 무조건 DB에서 이름 가져오도록 수정됨!)
+  // 2. 리뷰 등록/수정
   Future<void> _submitReview() async {
     if (_reviewController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -81,27 +80,21 @@ class _ReservationDetailScreenState extends State<ReservationDetailScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // 💡 [핵심 수정] Provider고 뭐고 다 떠나서, 무조건 DB에서 직접 이름 조회!
       String finalName = '익명'; // 기본값
 
       if (currentUser != null) {
-        // users 컬렉션에서 내 UID로 된 문서를 직접 가져옵니다.
         final userDoc =
             await _firestore.collection('users').doc(currentUser!.uid).get();
 
         if (userDoc.exists) {
-          // 문서가 있으면 그 안의 'name' 필드를 가져옵니다.
           finalName = userDoc.data()?['name'] ?? '익명';
-          debugPrint("DB에서 가져온 이름: $finalName"); // 콘솔에서 확인 가능
-        } else {
-          debugPrint("오류: DB에 유저 정보가 없습니다. (UID: ${currentUser!.uid})");
         }
       }
 
       final reviewData = {
         'reservationDocId': widget.reservation['docId'],
         'userId': currentUser?.uid,
-        'userName': finalName, // 💡 방금 DB에서 찾아낸 진짜 이름을 넣습니다.
+        'userName': finalName,
         'rating': _currentRating,
         'content': _reviewController.text.trim(),
         'timestamp': FieldValue.serverTimestamp(),
@@ -109,7 +102,6 @@ class _ReservationDetailScreenState extends State<ReservationDetailScreen> {
       };
 
       if (_hasReview && _reviewDocId != null) {
-        // 수정 (Update)
         await _firestore
             .collection('reviews')
             .doc(_reviewDocId)
@@ -121,7 +113,6 @@ class _ReservationDetailScreenState extends State<ReservationDetailScreen> {
           );
         }
       } else {
-        // 신규 작성 (Create)
         final docRef = await _firestore.collection('reviews').add(reviewData);
         if (mounted) {
           setState(() {
@@ -185,14 +176,13 @@ class _ReservationDetailScreenState extends State<ReservationDetailScreen> {
           const SnackBar(
               content: Text("예약이 취소되었습니다."), duration: Duration(seconds: 1)),
         );
-        Navigator.pop(context); // 취소 후 리스트로 복귀
+        Navigator.pop(context);
       }
     } catch (e) {
       debugPrint("예약 취소 중 오류 발생: $e");
     }
   }
 
-  // Helper 함수들
   String getStatusText(String? status) {
     if (status == 'confirmed') return '예약 확정';
     if (status == 'completed') return '사용 완료';
@@ -219,6 +209,28 @@ class _ReservationDetailScreenState extends State<ReservationDetailScreen> {
     );
   }
 
+  Widget _buildDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label,
+              style: const TextStyle(
+                  color: Colors.grey,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold)),
+          Text(value,
+              style: const TextStyle(
+                  color: Colors.black87,
+                  fontSize: 16,
+                  fontFamily: 'manru',
+                  fontWeight: FontWeight.w600)),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<DocumentSnapshot>(
@@ -238,10 +250,8 @@ class _ReservationDetailScreenState extends State<ReservationDetailScreen> {
           return const Scaffold(body: Center(child: Text("데이터 없음")));
         }
 
-        // 🔥 [수정] 시간 정보 합치기
         final String timeDisplay =
             "${data['startTime'] ?? '정보 없음'} ~ ${data['endTime'] ?? '정보 없음'}";
-        // 🔥 [수정] 연락처와 소속 정보 가져오기
         final String userContact = data['userContact'] ?? '정보 없음';
         final String userOrg = data['userOrg'] ?? '정보 없음';
         final int participants = data['participants'] ?? 1;
@@ -324,14 +334,11 @@ class _ReservationDetailScreenState extends State<ReservationDetailScreen> {
                       const SizedBox(height: 40),
 
                       _buildDetailRow("날짜", data['date'] ?? '-'),
-                      _buildDetailRow("시간", timeDisplay), // 🔥 수정됨: 합쳐진 시간 표시
+                      _buildDetailRow("시간", timeDisplay),
                       _buildDetailRow("예약자", data['userName'] ?? 'User'),
-                      // 🔥 [추가] 전화번호와 소속/학번 표시
                       _buildDetailRow("연락처", userContact),
                       _buildDetailRow("소속/학번", userOrg),
-                      // 🔥 [추가] 인원수 표시
                       _buildDetailRow("인원", "$participants명"),
-
                       _buildDetailRow("티켓 번호",
                           data['docId']?.substring(0, 8).toUpperCase() ?? '-'),
 
@@ -353,16 +360,8 @@ class _ReservationDetailScreenState extends State<ReservationDetailScreen> {
                             child: const Text("예약 취소"),
                           ),
                         ),
-                      if (data['view360Url'] != null &&
-                          data['view360Url'] != '') ...[
-                        const SizedBox(height: 12),
-                        SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton.icon(
-                                onPressed: () {},
-                                icon: const Icon(Icons.threesixty),
-                                label: const Text("360도 뷰 보기")))
-                      ]
+
+                      // 💡 [삭제됨] 여기에 있던 360도 뷰 버튼을 뺐습니다.
                     ],
                   ),
                 ),
@@ -403,7 +402,7 @@ class _ReservationDetailScreenState extends State<ReservationDetailScreen> {
                           readOnly: _hasReview,
                           decoration: InputDecoration(
                             hintText: _hasReview
-                                ? "작성한 리뷰가 있습니다." // 💡 힌트 텍스트 수정
+                                ? "작성한 리뷰가 있습니다."
                                 : "상세한 이용 후기를 남겨주세요.",
                             hintStyle: const TextStyle(color: Colors.grey),
                             fillColor: const Color(0xFFF5F5F5),
@@ -480,28 +479,6 @@ class _ReservationDetailScreenState extends State<ReservationDetailScreen> {
           ),
         );
       },
-    );
-  }
-
-  Widget _buildDetailRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label,
-              style: const TextStyle(
-                  color: Colors.grey,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold)),
-          Text(value,
-              style: const TextStyle(
-                  color: Colors.black87,
-                  fontSize: 16,
-                  fontFamily: 'manru',
-                  fontWeight: FontWeight.w600)),
-        ],
-      ),
     );
   }
 }
