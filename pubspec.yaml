@@ -38,6 +38,7 @@ flutter:
     - assets/images/
     - assets/images/maps/
     - .env
+    - assets/images/rooms/
 
   # To add assets to your application, add an assets section, like this:
   # assets:
