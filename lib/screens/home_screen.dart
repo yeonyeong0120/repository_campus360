@@ -348,7 +348,7 @@ class _HomeBannerWidgetState extends State<HomeBannerWidget> {
         // 🔥 [핵심 수정] 랜덤 셔플을 끄고, 발표용으로 지정한 3개만 가져오기
         if (_bannerSpaces.isEmpty && docs.isNotEmpty) {
           // 1. 발표용 타겟 강의실 이름 목록
-          final targetNames = ['컨퍼런스룸', '강의실 2', '디지털데이터활용실습실'];
+          final targetNames = ['컨퍼런스룸', '인공지능프로그래밍실습실', '디지털데이터활용실습실', '개인미디어실', 'ioT제어실습실'];
 
           // 2. 해당 이름과 일치하는 문서만 필터링
           _bannerSpaces = docs.where((doc) {
