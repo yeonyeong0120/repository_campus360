@@ -133,7 +133,7 @@ class _ReservationApprovalList extends StatelessWidget {
                 // 2. 예약 정보
                 _buildDetailRow("날짜", data['date']),
                 _buildDetailRow("시간", timeDisplay),
-                _buildDetailRow("인원", "${headCount}명"),
+                _buildDetailRow("인원", "$headCount명"),
                 _buildDetailRow("연락처", contact),
 
                 // 🌟 [추가] 기자재 정보 표시
@@ -241,8 +241,9 @@ class _ReservationApprovalList extends StatelessWidget {
           .orderBy('createdAt', descending: true)
           .snapshots(),
       builder: (context, snapshot) {
-        if (!snapshot.hasData)
+        if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
+        }
         if (snapshot.data!.docs.isEmpty) {
           return const Center(
               child: Text("승인 대기 중인 예약이 없습니다.",
@@ -404,8 +405,9 @@ class _ReservationHistoryList extends StatelessWidget {
           .orderBy('createdAt', descending: true)
           .snapshots(),
       builder: (context, snapshot) {
-        if (!snapshot.hasData)
+        if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
+        }
         if (snapshot.data!.docs.isEmpty) {
           return const Center(
               child: Text("처리된 예약 내역이 없습니다.",
