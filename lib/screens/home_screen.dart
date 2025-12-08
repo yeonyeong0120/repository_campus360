@@ -3,7 +3,14 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // 🔥 [추가] 로그아웃 기능용
+import 'package:provider/provider.dart'; // 🔥 [추가] 상태관리용
 import 'package:repository_campus360/screens/chatbot_sheet.dart';
+
+// 🔥 [추가] 로그아웃 후 이동 및 상태 초기화를 위해 임포트
+import '../providers/user_provider.dart';
+import 'login_screen.dart';
+
 import 'detail_screen.dart';
 import 'my_history_screen.dart';
 import 'map_screen.dart';
@@ -49,6 +56,28 @@ class HomeScreen extends StatelessWidget {
           ],
         ),
         actions: [
+          // -------------------------------------------------------
+          // 🔥 [추가] 로그아웃 버튼 (관리자 페이지와 동일한 로직 적용)
+          // -------------------------------------------------------
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.grey, size: 24),
+            tooltip: '로그아웃',
+            onPressed: () async {
+              // 1. Firebase 서버에서 로그아웃 (인증 토큰 삭제)
+              await FirebaseAuth.instance.signOut();
+
+              // 2. 앱 내부 유저 정보 초기화 및 로그인 화면으로 이동
+              if (context.mounted) {
+                context.read<UserProvider>().clearUser();
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
+                );
+              }
+            },
+          ),
+
+          // 기존 메뉴(내역 보기) 버튼
           IconButton(
             icon: const Icon(Icons.menu, color: Colors.black, size: 28),
             onPressed: () {

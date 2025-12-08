@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 // Provider는 이제 굳이 안 써도 되지만, 혹시 모르니 남겨둡니다.
-// import 'package:provider/provider.dart';
-// import '../providers/user_provider.dart';
 // 💡 [삭제] webview_screen import 제거
 
 class ReservationDetailScreen extends StatefulWidget {

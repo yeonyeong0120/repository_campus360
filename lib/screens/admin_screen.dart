@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart'; // DB 접근
+import 'package:firebase_auth/firebase_auth.dart'; // 🔥 [수정] 로그아웃 기능을 위해 추가
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
 import 'login_screen.dart';
@@ -542,12 +543,19 @@ class AdminScreen extends StatelessWidget {
           actions: [
             IconButton(
               icon: const Icon(Icons.logout, color: Colors.red),
-              onPressed: () {
-                context.read<UserProvider>().clearUser();
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (_) => const LoginScreen()),
-                );
+              onPressed: () async {
+                // 🔥 [수정] Firebase 로그아웃 로직 추가
+                // 1. Firebase 서버에 로그아웃 요청 (비동기)
+                await FirebaseAuth.instance.signOut();
+
+                // 2. 앱 내부 상태(Provider) 초기화 및 화면 이동
+                if (context.mounted) {
+                  context.read<UserProvider>().clearUser();
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (_) => const LoginScreen()),
+                  );
+                }
               },
             ),
           ],
