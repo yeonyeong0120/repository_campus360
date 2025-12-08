@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart'; // DB 접근
+import 'package:firebase_auth/firebase_auth.dart'; // 🔥 [수정] 로그아웃 기능을 위해 추가
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
 import 'login_screen.dart';
@@ -133,7 +134,7 @@ class _ReservationApprovalList extends StatelessWidget {
                 // 2. 예약 정보
                 _buildDetailRow("날짜", data['date']),
                 _buildDetailRow("시간", timeDisplay),
-                _buildDetailRow("인원", "${headCount}명"),
+                _buildDetailRow("인원", "$headCount명"),
                 _buildDetailRow("연락처", contact),
 
                 // 🌟 [추가] 기자재 정보 표시
@@ -241,8 +242,9 @@ class _ReservationApprovalList extends StatelessWidget {
           .orderBy('createdAt', descending: true)
           .snapshots(),
       builder: (context, snapshot) {
-        if (!snapshot.hasData)
+        if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
+        }
         if (snapshot.data!.docs.isEmpty) {
           return const Center(
               child: Text("승인 대기 중인 예약이 없습니다.",
@@ -404,8 +406,9 @@ class _ReservationHistoryList extends StatelessWidget {
           .orderBy('createdAt', descending: true)
           .snapshots(),
       builder: (context, snapshot) {
-        if (!snapshot.hasData)
+        if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
+        }
         if (snapshot.data!.docs.isEmpty) {
           return const Center(
               child: Text("처리된 예약 내역이 없습니다.",
@@ -540,12 +543,19 @@ class AdminScreen extends StatelessWidget {
           actions: [
             IconButton(
               icon: const Icon(Icons.logout, color: Colors.red),
-              onPressed: () {
-                context.read<UserProvider>().clearUser();
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (_) => const LoginScreen()),
-                );
+              onPressed: () async {
+                // 🔥 [수정] Firebase 로그아웃 로직 추가
+                // 1. Firebase 서버에 로그아웃 요청 (비동기)
+                await FirebaseAuth.instance.signOut();
+
+                // 2. 앱 내부 상태(Provider) 초기화 및 화면 이동
+                if (context.mounted) {
+                  context.read<UserProvider>().clearUser();
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (_) => const LoginScreen()),
+                  );
+                }
               },
             ),
           ],
