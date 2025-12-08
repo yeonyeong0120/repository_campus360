@@ -27,9 +27,6 @@ class _MapScreenState extends State<MapScreen> {
   // 📍 마커(핀) 목록
   Set<Marker> _markers = {};
 
-  // 필터용 변수
-  double _peopleCount = 10.0;
-
   // 🔥 [핵심 추가] 전체 공간 데이터 (실제 상세 내역과 동일한 데이터베이스)
   // 원래는 별도 파일(예: data/room_data.dart)에 있어야 하지만,
   // 설명을 위해 여기에 포함했습니다. 이 데이터가 '정답지'입니다.
@@ -371,75 +368,5 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-  void _showFilterModal(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (BuildContext context, StateSetter setModalState) {
-            return Container(
-              padding: const EdgeInsets.all(20),
-              height: 450,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text("필터로 찾아보기",
-                          style: TextStyle(
-                              fontSize: 20, fontWeight: FontWeight.bold)),
-                      IconButton(
-                          icon: const Icon(Icons.close),
-                          onPressed: () => Navigator.pop(context)),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  const Row(children: [
-                    Chip(
-                        label: Text("Wi-Fi"),
-                        backgroundColor: Colors.blue,
-                        labelStyle: TextStyle(color: Colors.white)),
-                    SizedBox(width: 10),
-                    Chip(label: Text("빔프로젝터")),
-                  ]),
-                  const SizedBox(height: 20),
-                  const Text("인원 선택",
-                      style: TextStyle(fontWeight: FontWeight.bold)),
-                  Slider(
-                    value: _peopleCount,
-                    min: 0,
-                    max: 50,
-                    divisions: 5,
-                    label: "${_peopleCount.round()}명",
-                    onChanged: (val) => setModalState(() => _peopleCount = val),
-                  ),
-                  const Spacer(),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        Navigator.push(context,
-                            MaterialPageRoute(builder: (_) => SearchScreen()));
-                      },
-                      style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blue,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 15)),
-                      child: const Text("검색 결과 보기",
-                          style: TextStyle(fontSize: 18)),
-                    ),
-                  )
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
+  
 }
